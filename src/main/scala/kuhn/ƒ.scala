@@ -2,9 +2,13 @@ package kuhn
 
 import java.lang.Math._
 import javax.sound.midi._
-import collection._
-import mutable.ListBuffer
-import collection.mutable
+import scala.collection.{mutable, _}
+import scala.collection.mutable.ListBuffer
+
+object ƒ {
+  val beats = 12
+}
+import kuhn.ƒ.beats
 
 // time, note, duration
 case class Sequence(notes: Seq[(Int, Int, Int)], len: Int) {
@@ -39,10 +43,11 @@ object Sequence {
 
 trait Monad {
   def apply(input: Sequence): Sequence
+  override def toString = this(Sequence.empty).toString
 }
 
 object Monad {
-  implicit def functionToMonad(f: Sequence ⇒ Sequence) = new Monad {
+  implicit def functionToMonad(f: Sequence ⇒ Sequence)  = new Monad {
     override def apply(input: Sequence): Sequence = f(input)
   }
   implicit class MonadImplicits(m0: Monad) {
@@ -88,13 +93,25 @@ object Monad {
         Sequence(s0.notes map { case (t, n, d) ⇒ (t, n + semitones, d) }, s0.len)
     }
     def down(semitones: Int): Monad = up(-semitones)
+    def normalize(to: Int = beats): Monad = {
+      input: Sequence ⇒
+        val s0 = m0(input)
+        if (s0.len < to) {
+          (m0 ** (to / s0.len))(input)
+        } else if (s0.len > to) {
+          (m0 */ (s0.len / to))(input)
+        } else {
+          s0
+        }
+    }
+    def N = normalize()
   }
   def rest(time: Int): Monad = {
     input: Sequence ⇒
       Sequence(Seq.empty, time)
   }
 }
-import Monad._
+import kuhn.Monad._
 
 object Midi {
   val SongPositionPointer = 0xf2.toByte
@@ -111,7 +128,7 @@ object Midi {
     }
   }
 }
-import Midi._
+import kuhn.Midi._
 
 object R extends Receiver {
   var midi = collection.immutable.Map.empty[Int, List[MidiMessage]]
@@ -144,19 +161,26 @@ object MasterOut extends Monad {
     println(s"R.midi.size = ${R.midi.size}")
     Sequence.empty
   }
-}
-
-case class Part(sequence: Sequence) extends Monad {
-  def apply(ignored: Sequence) = sequence
+  MidiSystem.getTransmitter.setReceiver(R)
 }
 
 trait Song {
-  implicit def sequenceToMonad(s: Sequence): Monad = Part(s)
-  def S(notes: (Int, Int, Int)*): Monad = Part(Sequence(notes:_*))
-  val B = 12
-  def song: Monad
-  def main(args: Array[String]) {
-    (100 *: song) >> MasterOut apply Sequence.empty
-    MidiSystem.getTransmitter.setReceiver(R)
+  object Start extends Monad {
+    def apply(input: Sequence): Sequence = Sequence.empty
   }
+  object End extends Monad {
+    def apply(input: Sequence): Sequence = input
+  }
+  case class Part(sequence: Sequence) extends Monad {
+    def apply(ignored: Sequence) = sequence
+  }
+  implicit def sequenceToMonad(s: Sequence): Monad = Part(s)
+  def notes[NOTE : Note](notes: (Int, NOTE, Int)*): Monad =
+    Part(Sequence(notes.map {
+      case (t, n, d) ⇒ (t, implicitly[Note[NOTE]].intVal(n), d)
+    }:_*))
+  def n[NOTE : Note](n: NOTE*): Monad = notes(n.zipWithIndex map { case (n, i) ⇒ (i*beats, n, 1*beats) }:_*)
+  def b[NOTE : Note](n: NOTE*): Monad = notes(n.zipWithIndex map { case (n, i) ⇒ (i, n, 1) }:_*) N
+  def song: Monad
+  def main(args: Array[String]): Unit = song >> MasterOut apply Sequence.empty
 }
