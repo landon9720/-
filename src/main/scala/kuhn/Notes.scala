@@ -13,9 +13,9 @@ object Notes {
   val Fs0 = x; x+=1
   val G0 = x; x+=1
   val Gs0 = x; x+=1
-  val A0 = x; x+=1
-  val Bb0 = x; x+=1
-  val B0 = x; x+=1
+  val A = x; x+=1
+  val Bba = x; x+=1
+  val Ba = x; x+=1
   val C1 = x; x+=1
   val Cs1 = x; x+=1
   val D1 = x; x+=1
@@ -25,9 +25,9 @@ object Notes {
   val Fs1 = x; x+=1
   val G1 = x; x+=1
   val Gs1 = x; x+=1
-  val A1 = x; x+=1
-  val Bb1 = x; x+=1
-  val B1 = x; x+=1
+  val A2 = x; x+=1
+  val Bb2 = x; x+=1
+  val B2 = x; x+=1
   val C2 = x; x+=1
   val Cs2 = x; x+=1
   val D2 = x; x+=1
@@ -37,9 +37,9 @@ object Notes {
   val Fs2 = x; x+=1
   val G2 = x; x+=1
   val Gs2 = x; x+=1
-  val A2 = x; x+=1
-  val Bb2 = x; x+=1
-  val B2 = x; x+=1
+  val A3 = x; x+=1
+  val Bb3 = x; x+=1
+  val B3 = x; x+=1
   val C3 = x; x+=1
   val Cs3 = x; x+=1
   val D3 = x; x+=1
@@ -49,9 +49,9 @@ object Notes {
   val Fs3 = x; x+=1
   val G3 = x; x+=1
   val Gs3 = x; x+=1
-  val A3 = x; x+=1
-  val Bb3 = x; x+=1
-  val B3 = x; x+=1
+  val A4 = x; x+=1
+  val Bb4 = x; x+=1
+  val B4 = x; x+=1
   val C4 = x; x+=1
   val Cs4 = x; x+=1
   val D4 = x; x+=1
@@ -61,9 +61,9 @@ object Notes {
   val Fs4 = x; x+=1
   val G4 = x; x+=1
   val Gs4 = x; x+=1
-  val A4 = x; x+=1
-  val Bb4 = x; x+=1
-  val B4 = x; x+=1
+  val A5 = x; x+=1
+  val Bb5 = x; x+=1
+  val B5 = x; x+=1
   val C5 = x; x+=1
   val Cs5 = x; x+=1
   val D5 = x; x+=1
@@ -73,9 +73,9 @@ object Notes {
   val Fs5 = x; x+=1
   val G5 = x; x+=1
   val Gs5 = x; x+=1
-  val A5 = x; x+=1
-  val Bb5 = x; x+=1
-  val B5 = x; x+=1
+  val A6 = x; x+=1
+  val Bb6 = x; x+=1
+  val B6 = x; x+=1
   val C6 = x; x+=1
   val Cs6 = x; x+=1
   val D6 = x; x+=1
@@ -85,9 +85,9 @@ object Notes {
   val Fs6 = x; x+=1
   val G6 = x; x+=1
   val Gs6 = x; x+=1
-  val A6 = x; x+=1
-  val Bb6 = x; x+=1
-  val B6 = x; x+=1
+  val A7 = x; x+=1
+  val Bb7 = x; x+=1
+  val B7 = x; x+=1
   val C7 = x; x+=1
   val Cs7 = x; x+=1
   val D7 = x; x+=1
@@ -97,9 +97,9 @@ object Notes {
   val Fs7 = x; x+=1
   val G7 = x; x+=1
   val Gs7 = x; x+=1
-  val A7 = x; x+=1
-  val Bb7 = x; x+=1
-  val B7 = x; x+=1
+  val A8 = x; x+=1
+  val Bb8 = x; x+=1
+  val B8 = x; x+=1
   val C8 = x; x+=1
   val Cs8 = x; x+=1
   val D8 = x; x+=1
@@ -109,9 +109,9 @@ object Notes {
   val Fs8 = x; x+=1
   val G8 = x; x+=1
   val Gs8 = x; x+=1
-  val A8 = x; x+=1
-  val Bb8 = x; x+=1
-  val B8 = x; x+=1
+  val A9 = x; x+=1
+  val Bb9 = x; x+=1
+  val B9 = x; x+=1
   val C9 = x; x+=1
   val Cs9 = x; x+=1
   val D9 = x; x+=1
@@ -121,9 +121,9 @@ object Notes {
   val Fs9 = x; x+=1
   val G9 = x; x+=1
   val Gs9 = x; x+=1
-  val A9 = x; x+=1
-  val Bb9 = x; x+=1
-  val B9 = x; x+=1
+  val A10 = x; x+=1
+  val Bb10 = x; x+=1
+  val B10 = x; x+=1
   val C10 = x; x+=1
   val Cs10 = x; x+=1
   val D10 = x; x+=1
@@ -133,35 +133,41 @@ object Notes {
   val Fs10 = x; x+=1
   val G10 = x; x+=1
   val Gs10 = x; x+=1
+//
+//  implicit object IntNote extends Note[Int] {
+//    def intVal(a: Int) = a
+//  }
 
-  implicit object IntNote extends Note[Int] {
-    def intVal(a: Int) = a
-  }
-
-  val N0 = NoteOfScale(0)
-  val N1 = NoteOfScale(1)
-  val N2 = NoteOfScale(2)
-  val N3 = NoteOfScale(3)
-  val N4 = NoteOfScale(4)
-  val N5 = NoteOfScale(5)
-  val N6 = NoteOfScale(6)
-  val N7 = NoteOfScale(7)
-  val N8 = NoteOfScale(8)
-  val N9 = NoteOfScale(9)
-  val N10 = NoteOfScale(10)
-  val N11 = NoteOfScale(11)
-  val N12 = NoteOfScale(12)
+//  val N0 = NoteOfScale(0)
+//  val N1 = NoteOfScale(1)
+//  val N2 = NoteOfScale(2)
+//  val N3 = NoteOfScale(3)
+//  val N4 = NoteOfScale(4)
+//  val N5 = NoteOfScale(5)
+//  val N6 = NoteOfScale(6)
+//  val N7 = NoteOfScale(7)
+//  val N8 = NoteOfScale(8)
+//  val N9 = NoteOfScale(9)
+//  val N10 = NoteOfScale(10)
+//  val N11 = NoteOfScale(11)
+//  val N12 = NoteOfScale(12)
 }
 
-trait Note[A] {
-  def intVal(a: A): Int
-}
+//trait Note[A] {
+//  def intVal(a: A): Int
+//}
 
-abstract class Scale(steps: Symbol) extends Note[NoteOfScale] {
+
+//
+//case class NoteOfScale(rank: Int) {
+//  def unary_- = NoteOfScale(-rank)
+//}
+
+abstract class Scale(steps: String) {
   private val ranks = {
     var i = 0
     var r = Seq(0)
-    steps.name.foreach {
+    steps.foreach {
       case 'w' ⇒
         i += 2
         r :+= i
@@ -171,8 +177,8 @@ abstract class Scale(steps: Symbol) extends Note[NoteOfScale] {
     }
     r
   }
-  override def intVal(a: NoteOfScale): Int = {
-    var i = a.rank
+  def apply(n: NoteOfScale): Note = {
+    var i = n.value
     var o = 0
     while (i < 0) {
       i += ranks.size
@@ -182,22 +188,9 @@ abstract class Scale(steps: Symbol) extends Note[NoteOfScale] {
       i -= ranks.size
       o += 1
     }
-    ranks(i) + o * 12
+    Note(n.time, ranks(i) + o * 12, n.duration, n.attack, n.release)
   }
 }
 
-abstract class MajorScale(root: Int) extends Scale('wwhwww)
-abstract class MinorScale(root: Int) extends Scale('whwwhw)
-
-object CMajor extends MajorScale(C5)
-object CsMajor extends MajorScale(Cs5)
-object CMinor extends MinorScale(C5)
-object CsMinor extends MinorScale(Cs5)
-object DMajor extends MajorScale(D5)
-object DsMajor extends MajorScale(Ds5)
-object DMinor extends MinorScale(D5)
-object DsMinor extends MinorScale(Ds5)
-
-case class NoteOfScale(rank: Int) {
-  def unary_- = NoteOfScale(-rank)
-}
+case class MajorScale(root: Int) extends Scale("wwhwww")
+case class MinorScale(root: Int) extends Scale("whwwhw")
