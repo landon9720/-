@@ -9,6 +9,7 @@ Revolver.settings
 mainClass in reStart := Some("kuhn.Song6")
 
 libraryDependencies ++= Seq(
+  "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
   "com.novocode" % "junit-interface" % "0.11" % "test",
   "junit" % "junit" % "4.12" % "test"
 )

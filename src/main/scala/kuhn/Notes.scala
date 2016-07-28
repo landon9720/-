@@ -2,7 +2,9 @@ package kuhn
 
 import kuhn.Notes._
 
-object Notes {
+import scala.collection.mutable.ArrayBuffer
+
+object  Notes {
   private var x = -60
   val C0 = x; x+=1
   val Cs0 = x; x+=1
@@ -164,31 +166,32 @@ object Notes {
 //}
 
 abstract class Scale(steps: String) {
-  private val ranks = {
+  val root: Int
+  val ranks: ArrayBuffer[Int] = {
     var i = 0
-    var r = Seq(0)
+    val r = ArrayBuffer(0)
     steps.foreach {
       case 'w' ⇒
         i += 2
-        r :+= i
+        r += i
       case 'h' ⇒
         i += 1
-        r :+= i
+        r += i
     }
     r
   }
   def apply(n: NoteOfScale): Note = {
-    var i = n.value
+    var rank = n.value
     var o = 0
-    while (i < 0) {
-      i += ranks.size
+    while (rank < 0) {
+      rank += ranks.size
       o -= 1
     }
-    while (i >= ranks.size) {
-      i -= ranks.size
+    while (rank >= ranks.size) {
+      rank -= ranks.size
       o += 1
     }
-    Note(n.time, ranks(i) + o * 12, n.duration, n.attack, n.release)
+    Note(n.time, ranks(rank) + o * 12 + n.accidental, n.duration, n.attack, n.release)
   }
 }
 

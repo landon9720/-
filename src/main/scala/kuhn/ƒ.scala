@@ -66,7 +66,7 @@ object NoteRelease extends ValueAccess[Note] {
   def set(e: Note, value: Int): Note = e.copy(release = value)
 }
 
-case class NoteOfScale(time: Int, value: Int, duration: Int = 1*beats, attack: Int = 128/2, release: Int = 128/2) extends ValueEvent[NoteOfScale] {
+case class NoteOfScale(time: Int, value: Int, duration: Int = 1*beats, attack: Int = 128/2, release: Int = 128/2, accidental: Int = 0) extends ValueEvent[NoteOfScale] {
   def copyWithTime(time: Int): NoteOfScale = copy(time = time)
   def copyWithValue(value: Int): NoteOfScale = copy(value = value)
 }
@@ -94,6 +94,11 @@ object NoteOfScaleAttack extends ValueAccess[NoteOfScale] {
 object NoteOfScaleRelease extends ValueAccess[NoteOfScale] {
   def get(e: NoteOfScale): Int = e.release
   def set(e: NoteOfScale, value: Int): NoteOfScale = e.copy(release = value)
+}
+
+object NoteOfScaleAccidental extends ValueAccess[NoteOfScale] {
+  def get(e: NoteOfScale): Int = e.accidental
+  def set(e: NoteOfScale, value: Int): NoteOfScale = e.copy(accidental = value)
 }
 
 case class Chord(time: Int, value: Int, rank: Int) extends ValueEvent[Chord] {

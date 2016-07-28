@@ -53,7 +53,7 @@ object Song4 extends Song {
   val backup: Monad[NoteOfScale, NoteOfScale] = stepsequence.map(p down 12 up).reduce(_>_)
 
   val song = StartOfNotes >
-    ((StartOfNoteOfScales >> notes) >> NoteOfScaleToNotes(CMajor)) === ((StartOfNoteOfScales >> backup) >> NoteOfScaleToNotes(CMajor) down 3)
+    ((StartOfNoteOfScales >> notes) >> NoteOfScaleToNotes(MajorScale(C4))) === ((StartOfNoteOfScales >> backup) >> NoteOfScaleToNotes(MajorScale(C4)) down 3)
 }
 
 object Song5 extends Song {
