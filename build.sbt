@@ -1,3 +1,9 @@
+name := "ƒ"
+
+organization := "kuhn"
+
+description := "Scala language MIDI sequencer"
+
 scalaVersion := "2.11.8"
 
 fork in run := true
@@ -6,7 +12,7 @@ connectInput in run := true
 
 Revolver.settings
 
-mainClass in reStart := Some("kuhn.Song6")
+mainClass in reStart := Some("kuhn.Song7")
 
 libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",

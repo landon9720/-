@@ -241,31 +241,25 @@ object Monad {
         s0.copySequence(s0.events map { e ⇒ accessor.set(e, accessor.get(e) + delta) }, s0.duration)
     }
     def down(delta: Int): Monad[A, B] = up(-delta)
-    def vmap(f: ValMod): Monad[A, B] = {
+  }
+  implicit class ValueMonadImplicits2[A <: Event[A], B <: Event[B]](m0: Monad[A, B]) {
+    def map(f: ValMod[B]): Monad[A, B] = {
       input: Sequence[A] ⇒
         val s0 = m0(input)
-        val accessor = implicitly[ValueAccess[B]]
-        s0.copySequence(s0.events.zipWithIndex map { case (e, i) ⇒ accessor.set(e, f(i, accessor.get(e))) }, s0.duration)
+        s0.copySequence(s0.events.map(f.f), s0.duration)
     }
   }
-  type ValMod = (Int, Int) ⇒ Int
-  implicit class ValModImplicits(f0: ValMod) {
-    def >(f1: ValMod): ValMod = {
-      case (x: Int, y: Int) ⇒
-        val v0 = f0(x, y)
-        val v1 = f1(x, v0)
-        v1
-    }
-  }
-  object IdentityValMod extends ValMod {
-    override def apply(v1: Int, v2: Int): Int = v2
-  }
-  case class ConstValMod(v: Int) extends ValMod {
-    override def apply(v1: Int, v2: Int): Int = v
-  }
-  case class LinearValMod(v: Int) extends ValMod {
-    override def apply(v1: Int, v2: Int): Int = v
-  }
+  case class ValMod[T <: Event[T]](f: T ⇒ T)
+//  implicit class ValModImplicits[T](f0: ValMod[T]) {
+//    def >(f1: ValMod[T]): ValMod[T] = ValMod(f0.accessor, {
+//      case (x: Int, y: Int) ⇒
+//        val v0 = f0.f(x, y)
+//        val v1 = f1.f(x, v0)
+//        v1
+//    })
+//  }
+  def ConstValMod[T <: Event[T]](accessor: ValueAccess[T], v: Int) = ValMod { e: T ⇒ accessor.set(e, v) }
+//  def ValueAccessValMod[T](accessor: ValueAccess[T]) = ValMod(accessor, { case (t, _) ⇒ accessor.g
 }
 import kuhn.Monad._
 
