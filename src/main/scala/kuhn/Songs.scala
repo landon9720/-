@@ -111,13 +111,24 @@ DE2GFABF2F2DE/F/GFABF2DBDG2d2cBGdcBGG2GDGBGA2DGBGAdgafdgabgg2fdcdBGG2DGBGAd
 }
 
 object Song9 extends Song {
-  def song: Monad[Note, Note] = {
+  def song = {
     val s = Abc.parse(abc, scale)
     StartOfNoteOfScales >> (s === (s up 7) === (s down 7)) >> NoteOfScaleToNotes(scale)
   }
   val abc = """
 EEE2BEE2B2AFDEFDEGFEBEE2B2AcBEEDEEE2BEE2B2AFDEFDEGFEBEE2B2AcBEE2
-e2g/f/ebeged2dfaafde2gebegedBAcBEE2e2g/f/ebeg/f/ed2dfa2fdefgefdeBd/c/BAcBEE2
-            """
+e2g/f/ebeged2dfaafde2gebegedBAcBEE2e2g/f/ebeg/f/ed2dfa2fdefgefdeBd/c/BAcBEE2"""
   val scale = MinorScale(E)
+}
+
+object Song10 extends Song {
+  def song = StartOfNoteOfScales >> Abc.parse(abc, scale) >> NoteOfScaleToNotes(scale)
+  val abc = """[Ace2][ceg2][egb4]"""
+  val scale = MajorScale(A)
+}
+
+object Song11 extends Song {
+  def song = StartOfNoteOfScales >> Abc.parse(abc, scale) >> NoteOfScaleToNotes(scale)
+  val abc = """(3AAA BA GAAB (3AAABd eddB G2BA BGGB (3ccc BA BGGB (3AAABA"""
+  val scale = MinorScale(A)
 }

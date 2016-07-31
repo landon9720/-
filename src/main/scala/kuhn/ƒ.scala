@@ -8,6 +8,12 @@ import scala.collection.mutable.ListBuffer
 object ƒ {
   val beats = 12
   implicit val NoteOfScaleValue_ = NoteOfScaleValue
+  implicit class RichInt(i: Int) {
+    def productWithRatio(ratio: (Int, Int)): Int = {
+      val (numerator, denominator) = ratio
+      (i * numerator) / denominator
+    }
+  }
 }
 import ƒ._
 
@@ -132,14 +138,8 @@ trait Sequence[T <: Event[T]] {
     copySequence(for (e ← events) yield e.copyWithTime(delta + e.time), delta + duration)
 }
 
-object Sequence {
-}
-
 case class MidiSequence(events: Seq[MidiEvent], duration: Int) extends Sequence[MidiEvent] {
   def copySequence(events: Seq[MidiEvent], duration: Int) = copy(events = events, duration = duration)
-}
-
-object MidiSequence {
 }
 
 case class NoteSequence(events: Seq[Note], duration: Int) extends Sequence[Note] {
@@ -172,15 +172,12 @@ case class ChordSequence(events: Seq[Chord], duration: Int) extends Sequence[Cho
   def copySequence(events: Seq[Chord], duration: Int) = copy(events = events, duration = duration)
 }
 
-object ChordSequence {
-}
-
 trait Monad[A <: Event[A], B <: Event[B]] {
   def apply(input: Sequence[A]): Sequence[B]
 }
 
 object Monad {
-  implicit def functionToMonad[A <: Event[A], B <: Event[B]](f: Sequence[A] ⇒ Sequence[B]) = new Monad[A, B] {
+  implicit def functionToMonad[A <: Event[A], B <: Event[B]](f: Sequence[A] ⇒ Sequence[B]): Monad[A, B] = new Monad[A, B] {
     override def apply(input: Sequence[A]): Sequence[B] = f(input)
   }
   implicit class MonadImplicits[A <: Event[A], B <: Event[B]](m0: Monad[A, B]) {
