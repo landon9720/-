@@ -132,3 +132,27 @@ object Song11 extends Song {
   val abc = """(3AAA BA GAAB (3AAABd eddB G2BA BGGB (3ccc BA BGGB (3AAABA"""
   val scale = MinorScale(A)
 }
+
+object Song12 extends Song {
+  def song = StartOfNoteOfScales >> Abc.parse(abc, scale) >> NoteOfScaleToNotes(scale)
+  val abc = """ C2 x CC x C<C x C<<C x C<<<C x C<<<<C x C2 x CC x C>C x C>>C x C>>>C x C>>>>C """
+  val scale = MajorScale(C)
+}
+
+object Song13 extends Song {
+  def song = StartOfNoteOfScales >> Abc.parse(abc, scale) >> NoteOfScaleToNotes(scale)
+  val abc = """
+G>A |B2 (3ABA G2 (3FGF | E>FG>A B2 e>f | g>fe>d e>d (3Bcd | c>BA<G A2 (3FGA | (3BcB A2 (3GAG F>G | E>FG<A B2 e>f | g2 (3fed B2 (3fgf | e>E E>^D E2
+G>A |B2 (3ABA G2 (3FGF | E>FG>A B2 e>f | g>fe>d e>d (3Bcd | c>BA<G A2 (3FGA | (3BcB A2 (3GAG F>G | E>FG<A B2 e>f | g2 (3fed B2 (3fgf | e>E E>^D E2
+g>a |b2- b>g e2 (3fga | b>^ab>g e2 (3gfe | d3 e f3 g | a>f (3def a2 (3agf | e^def g>fg>a | b2 (3agf g>fe>f | g>fe<d B2 (3gfg | e2 E2 E2
+g>a |b2- b>g e2 (3fga | b>^ab>g e2 (3gfe | d3 e f3 g | a>f (3def a2 (3agf | e^def g>fg>a | b2 (3agf g>fe>f | g>fe<d B2 (3gfg | e2 E2 E2
+  """
+  val scale = MinorScale(E)
+}
+
+/*
+
+
+
+
+ */

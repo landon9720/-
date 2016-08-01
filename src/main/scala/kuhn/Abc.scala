@@ -1,14 +1,17 @@
 package kuhn
 
 import kuhn.ƒ._
+import Math._
 
 import scala.util.parsing.input.CharSequenceReader
 
 object Abc extends scala.util.parsing.combinator.Parsers {
 
   def parse[T <: Event[T]](in: String, scale: Scale): NoteOfScalePart[NoteOfScale] = {
-    val items = sequence(new CharSequenceReader(in)).get
-    println(s"items=$items")
+    val items = phrase(sequence)(new CharSequenceReader(in)) match {
+      case Success(items, _) ⇒ items
+      case n: NoSuccess ⇒ sys.error(n.toString)
+    }
     var time = 0
     var result = List.empty[NoteOfScale]
     for (item ← items) yield {
@@ -33,6 +36,22 @@ object Abc extends scala.util.parsing.combinator.Parsers {
             }
             time += duration
           }
+        case DottedCouplet(note1, note2, quantity) ⇒
+          var multiplier: (Int, Int) = (1, 2)
+          for (_ ← 1 until abs(quantity)) {
+            var (numerator, denominator) = multiplier
+            multiplier = ((numerator * 2) + 1, denominator * 2)
+          }
+          val d1 = note1.d + (note1.d productWithRatio multiplier) * (if (quantity > 0) 1 else -1)
+          val d2 = note2.d + (note2.d productWithRatio multiplier) * (if (quantity < 0) 1 else -1)
+          if (!note1.rest) {
+            result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(note1, scale), duration = d1, accidental = note1.a)
+          }
+          time += d1
+          if (!note2.rest) {
+            result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(note2, scale), duration = d2, accidental = note2.a)
+          }
+          time += d2
       }
     }
     println(s"result=$result time=$time")
@@ -62,19 +81,20 @@ object Abc extends scala.util.parsing.combinator.Parsers {
   }
   case class Chord(notes: List[Note]) extends Item
   case class Tuplet(numberOfNotes: Int, inTheTimeOf: Int, forTheNextNotes: Int, notes: List[Note]) extends Item
+  case class DottedCouplet(note1: Note, note2: Note, quantity: Int) extends Item
   case class Accidental(value: Int)
   case class OctaveModifier(value: Int)
   case class Duration(numerator: Int, denominator: Int) {
     val value = beats / denominator * numerator
   }
   def sequence = rep1(item | ignored) ^^ { _ collect { case i: Item ⇒ i } }
-  def item = note | chord | (tupletPrefix >> tuplet)
+  def item = dottedCouplet | note | chord | (tupletPrefix >> tuplet)
   def note = rep(accidental) ~ v ~ rep(octaveModifier) ~ opt(duration) ^^ {
     case p ~ v ~ s ~ d ⇒ Note(p, v, s, d)
   }
   def chord = '[' ~> rep1(note) <~ ']' ^^ { case notes ⇒ Chord(notes) }
   def ignored = acceptMatch("ignored", {
-    case c if " \n\t|()~" contains c ⇒ Unit
+    case c if " \n\t|()~-" contains c ⇒ Unit
   })
   def accidental = acceptMatch("accidental", {
     case '^' ⇒ Accidental(+1)
@@ -110,38 +130,25 @@ object Abc extends scala.util.parsing.combinator.Parsers {
         Tuplet(numberOfNotes, tupletNumberOfNotesDefault(numberOfNotes), numberOfNotes, null)
     }
   private val tupletNumberOfNotesDefault: Int ⇒ Int = {
-    case 2 ⇒ 3 // (2	2 notes in the time of 3
-    case 3 ⇒ 2 // (3	3 notes in the time of 2
-    case 4 ⇒ 3 // (4	4 notes in the time of 3
-    case 5 ⇒ 2 // (5	5 notes in the time of n !!! (violated spec)
-    case 6 ⇒ 2 // (6	6 notes in the time of 2
-    case 7 ⇒ 2 // (7	7 notes in the time of n !!! (violated spec)
-    case 8 ⇒ 3 // (8	8 notes in the time of 3
-    case 9 ⇒ 2 // (9	9 notes in the time of n !!! (violated spec)
+    case 2 ⇒ 3 // 2 notes in the time of 3
+    case 3 ⇒ 2 // 3 notes in the time of 2
+    case 4 ⇒ 3 // 4 notes in the time of 3
+    case 5 ⇒ 2 // 5 notes in the time of n !!! (violated spec)
+    case 6 ⇒ 2 // 6 notes in the time of 2
+    case 7 ⇒ 2 // 7 notes in the time of n !!! (violated spec)
+    case 8 ⇒ 3 // 8 notes in the time of 3
+    case 9 ⇒ 2 // 9 notes in the time of n !!! (violated spec)
   }
   def tuplet(prefix: Tuplet) = repN(prefix.forTheNextNotes, note) ^^ {
     case notes ⇒ prefix.copy(notes = notes)
   }
+  def dottedCouplet =
+    note ~ rep1('<') ~ note ^^ {
+      case note1 ~ mods ~ note2 ⇒ DottedCouplet(note1, note2, -mods.size)
+    } |
+    note ~ rep1('>') ~ note ^^ {
+      case note1 ~ mods ~ note2 ⇒ DottedCouplet(note1, note2, +mods.size)
+    }
 
   override type Elem = Char
 }
-
-
-//
-//If the time signature is compound (6/8, 9/8, 12/8) then n is three, otherwise n is two.
-//
-//
-//(p:q:r which means
-//'put p notes into the time of q for the next r notes'.
-//If q is not given, it defaults as above.
-//If r is not given, it defaults to p.
-//
-//(3 is equivalent to (3:: or (3:2 ,
-//which in turn are equivalent to (3:2:3,
-//whereas (3::2 is equivalent to (3:2:2.
-//
-//This can be useful to include notes of different lengths within a tuplet,
-//for example (3:2:2 G4c2 or (3:2:4 G2A2Bc.
-//It also describes more precisely how the simple syntax works in cases like
-//(3 D2E2F2 or even (3 D3EF2. The number written over the tuplet is p.
-
