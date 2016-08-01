@@ -261,8 +261,19 @@ object Monad {
 import kuhn.Monad._
 
 object Midi {
-  val SongPositionPointer = 0xf2.toByte
-  val TimingClock = 0xf8.toByte
+  val SongPositionPointer = 0xf2 toByte
+  val TimingClock = 0xf8 toByte
+  val NoteOff = 0x80 toByte
+  val NoteOff16 = NoteOff + (0xf toByte)
+  val NoteOn = 0x90 toByte
+  val NoteOn16 = NoteOn + (0xf toByte)
+  val Start = 0xfa toByte
+  val Continue = 0xfb toByte
+  val Stop = 0xfc toByte
+  val ControlChange = 0xb0 toByte
+  val ControlChange16 = ControlChange + (0xf toByte)
+  val PitchBend = 0xe0
+  val PitchBend16 = PitchBend + (0xf toByte)
   implicit class ByteImplicits(byte: Byte) {
     def hex = Option(byte).map("%02x" format _).mkString
   }
@@ -271,7 +282,7 @@ object Midi {
   }
   implicit class MidiMessageImplicits(message: MidiMessage) {
     def toDebugString = {
-      s"status=${message.getStatus.toByte.hex} length=${message.getLength} message=${message.getMessage.hex}"
+      s"message=${message.getMessage.hex} length=${message.getLength}"
     }
   }
 }
@@ -286,6 +297,7 @@ object R extends Receiver {
       case Array(SongPositionPointer, lsb, msb) ⇒
         val v = lsb | (msb << 8)
         pos = v
+        println(s"Song Position = $pos")
       case Array(TimingClock) ⇒
         for {
           messages ← midi.get(pos)
@@ -294,8 +306,13 @@ object R extends Receiver {
           receiver.send(message, -1)
         }
         pos += 1
-      case _ ⇒
-        println(s"message=${message.toDebugString} timeStamp=$timeStamp")
+      case Array(n, _, _) if n >= NoteOff && n <= NoteOn16 ⇒ // ignore
+      case Array(n, _, _) if n >= ControlChange && n <= ControlChange16 ⇒ // ignore
+      case Array(n, _, _) if n >= PitchBend && n <= PitchBend16 ⇒ // ignore
+      case Array(Start) ⇒ println("Start")
+      case Array(Continue) ⇒ println("Continue")
+      case Array(Stop) ⇒ println("Stop")
+      case _ ⇒ println(s"${message.toDebugString} timeStamp=$timeStamp")
     }
   }
   override def close(): Unit = {

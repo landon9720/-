@@ -54,7 +54,6 @@ object Abc extends scala.util.parsing.combinator.Parsers {
           time += d2
       }
     }
-    println(s"result=$result time=$time")
     NoteOfScalePart(NoteOfScaleSequence(result, time))
   }
 

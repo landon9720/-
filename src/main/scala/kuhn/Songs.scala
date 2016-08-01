@@ -127,9 +127,14 @@ object Song10 extends Song {
   val scale = MajorScale(A)
 }
 
-object Song11 extends Song {
+object Song11 extends Song { // Brenda Stubbert's
   def song = StartOfNoteOfScales >> Abc.parse(abc, scale) >> NoteOfScaleToNotes(scale)
-  val abc = """(3AAA BA GAAB (3AAABd eddB G2BA BGGB (3ccc BA BGGB (3AAABA"""
+  val abc = """
+B A/A/A BA GAAB A/A/A BA edde G2 BA BGGB c2 BA BGGB A/A/A BA GAAB A/A/A BA edda gedB GABd e2 dB eAA
+B A/A/A BA GAAB A/A/A BA edde G2 BA BGGB c2 BA BGGB A/A/A BA GAAB A/A/A BA edda gedB GABd e2 dB eAA
+B A/A/A a2 A/A/A g2 Aage ageg G2 BA BGGB c2 BA BGGB A/A/A a2 A/A/A g2 Aage agea gedB GABd e2 dB eAA
+B A/A/A a2 A/A/A g2 Aage ageg G2 BA BGGB c2 BA BGGB A/A/A BA GAAB A/A/A BA edda gedB GABd e2 dB eAA
+"""
   val scale = MinorScale(A)
 }
 
@@ -149,10 +154,3 @@ g>a |b2- b>g e2 (3fga | b>^ab>g e2 (3gfe | d3 e f3 g | a>f (3def a2 (3agf | e^de
   """
   val scale = MinorScale(E)
 }
-
-/*
-
-
-
-
- */
