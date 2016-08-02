@@ -107,7 +107,7 @@ object NoteOfScaleAccidental extends ValueAccess[NoteOfScale] {
   def set(e: NoteOfScale, value: Int): NoteOfScale = e.copy(accidental = value)
 }
 
-case class Chord(time: Int, value: Int, rank: Int) extends ValueEvent[Chord] {
+case class Chord(time: Int, value: Int, ranks: Seq[Int]) extends ValueEvent[Chord] {
   def copyWithTime(time: Int): Chord = copy(time = time)
   def copyWithValue(value: Int): Chord = copy(value = value)
 }
@@ -120,11 +120,6 @@ object ChordTime extends EventTime[Chord] {
 object ChordValue extends ValueAccess[Chord] {
   def get(e: Chord): Int = e.value
   def set(e: Chord, value: Int): Chord = e.copyWithValue(value)
-}
-
-object ChordRank extends ValueAccess[Chord] {
-  def get(e: Chord): Int = e.rank
-  def set(e: Chord, value: Int): Chord = e.copy(rank = value)
 }
 
 trait Sequence[T <: Event[T]] {
@@ -170,6 +165,14 @@ object NoteOfScaleSequence {
 
 case class ChordSequence(events: Seq[Chord], duration: Int) extends Sequence[Chord] {
   def copySequence(events: Seq[Chord], duration: Int) = copy(events = events, duration = duration)
+}
+
+object ChordSequence {
+  def apply(notes: Chord*): ChordSequence = {
+    val last = notes.maxBy(_.time).time
+    ChordSequence(notes, last)
+  }
+  def empty = new ChordSequence(Seq.empty, 0)
 }
 
 trait Monad[A <: Event[A], B <: Event[B]] {
@@ -350,9 +353,17 @@ case class NoteOfScalePart[T <: Event[T]](sequence: Sequence[NoteOfScale]) exten
   def apply(ignored: Sequence[T]) = sequence
 }
 
-case class NoteOfScaleToNotes(scale: Scale) extends Monad[NoteOfScale, Note] {
+case class ChordPart[T <: Event[T]](sequence: Sequence[Chord]) extends Monad[T, Chord] {
+  def apply(ignored: Sequence[T]) = sequence
+}
+
+case class NoteOfScalesToNotes(scale: Scale) extends Monad[NoteOfScale, Note] {
   def apply(input: Sequence[NoteOfScale]) = NoteSequence(input.events.map(scale.apply), input.duration)
 }
+
+//object ChordsToNoteOfScales extends Monad[Chord, NoteOfScale] {
+//  def apply(input: Sequence[Chord]): Sequence[NoteOfScale] = ???
+//}
 
 object StartOfNotes extends Monad[Note, Note] {
   def apply(ignored: Sequence[Note]) = NoteSequence.empty
@@ -360,6 +371,10 @@ object StartOfNotes extends Monad[Note, Note] {
 
 object StartOfNoteOfScales extends Monad[Note, NoteOfScale] {
   def apply(ignored: Sequence[Note]) = NoteOfScaleSequence.empty
+}
+
+object StartOfChords extends Monad[Note, Chord] {
+  def apply(ignored: Sequence[Note]) = ChordSequence.empty
 }
 
 trait Song {

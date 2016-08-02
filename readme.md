@@ -1,12 +1,14 @@
 Scala Language MIDI Sequencer
 =============================
 
-An experiment in creating music by building up monadic transformations on sequences of values.
+This project is:
 
-Generates MIDI note events.
+* an experiment in creating music by building monadic transformations on sequences of value data
+* a programable instrument that generates MIDI note events
+* a Scala toolchain for MIDI sequencing
 
 References
-==========
+----------
 
 https://www.midi.org/specifications/item/table-2-expanded-messages-list-status-bytes
 http://www.electronics.dit.ie/staff/tscarff/Music_technology/midi/midi_note_numbers_for_octaves.htm
