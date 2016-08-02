@@ -163,53 +163,78 @@ object Song14 extends Song {
     def apply(input: Sequence[Chord]): Sequence[NoteOfScale] = {
       val result = new mutable.ListBuffer[NoteOfScale]
       for (Chord(time, root, ranks) ← input.events) {
-        for ((row, rowRank) ← matrix.rows.zipWithIndex) {
-          for {
-            (colValue, colOffset) ← row.zipWithIndex
-            if colValue != -1
-          } {
-            result += NoteOfScale(time + colOffset*beats, root+ranks.apply(rowRank))
+        matrix.foreach { (colOffset, rowRank, colValue) ⇒
+          if (colValue != -1) {
+            var rowRank1 = rowRank
+            var octaves = 0
+            while (rowRank1 < 0) {
+              rowRank1 += ranks.size
+              octaves -= 1
+            }
+            while (rowRank1 >= ranks.size) {
+              rowRank1 -= ranks.size
+              octaves += 1
+            }
+            val attack = 128 productWithRatio(colValue, 16)
+            result += NoteOfScale(time + colOffset*beats, root+scale.ranks.size*octaves+ranks(rowRank1), duration = 1*beats, attack = attack, release = attack)
           }
         }
       }
-      var duration = matrix.width
+      val duration = matrix.width
       NoteOfScaleSequence(result.toList, duration)
     }
   }
 
-  case class Matrix(rows: Seq[Seq[Int]]) {
+  case class Matrix(rows: Seq[Seq[Int]], offset: (Int, Int)) {
     assert(rows.tail.forall(_.size == rows.head.size))
     val height = rows.size
     val width = rows.head.size
+    val (offsetX, offsetY) = offset
+    val left = offsetX
+    val right = left + width
+    val top = offsetY
+    val bottom = top + height
+    def foreach(f: (Int, Int, Int) ⇒ Unit): Unit = {
+      for {
+        (row, rowIndex) ← rows.zipWithIndex
+        (cell, colIndex) ← row.zipWithIndex
+      } {
+        f(colIndex + offsetX, rowIndex + offsetY, cell)
+      }
+    }
   }
 
   object Matrix {
-    def apply(asString: String): Matrix = {
-      val rows = asString.split("\n").filterNot(_.size == 0)
+    def apply(asString: String, offset: (Int, Int) = (0, 0)): Matrix = {
+      val rows = asString.split("\n").filterNot(_.isEmpty)
       val len = rows.maxBy(_.size).size
-      new Matrix((for (r ← rows) yield r.padTo(len, ' ').map(_.asDigit)))
+      new Matrix(for (r ← rows) yield r.padTo(len, ' ').map(_.asDigit), offset)
     }
   }
 
   val matrix = Matrix("""
-55
-5 5
-5  5
-""")
+a a a a a a a a
+  a a a a a a a
+    a a a a a a
+      a a a a a
+        a a a a
+          a a a
+            a a
+              a """, offset = (0, -2))
 
   def Triad(time: Int, root: Int) = Chord(time*beats, root, Seq(1, 3, 5).map(_-1))
 
   var _t = 0
   def t = {
     val r = _t
-    _t += 4
+    _t += matrix.width
     r
   }
 
   def song =
     StartOfChords >> ChordPart(ChordSequence(
-      ((0 to 6) ++ (7 to -6 by -1) ++ (-7 to -1)) map { Triad(t, _) } :_*
+      Seq(1, 4, 1, 4, 5, 1).map(_-1) map { Triad(t, _) } :_*
     )) >> ChordsToNoteOfScales(matrix) >> NoteOfScalesToNotes(scale)
 
-  val scale = MajorScale(E)
+  val scale = MajorScale(C)
 }
