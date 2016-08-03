@@ -40,8 +40,6 @@ trait ValueEvent[T <: Event[T]] extends Event[T] {
   def copyWithValue(value: Int): ValueEvent[T]
 }
 
-trait EventValue[T <: Event[T]] extends ValueAccess[ValueEvent[T]]
-
 case class Note(time: Int, value: Int, duration: Int = 1*beats, attack: Int = 128/2, release: Int = 128/2) extends ValueEvent[Note] {
   def copyWithTime(time: Int): Note = copy(time = time)
   def copyWithValue(value: Int): Note = copy(value = value)
@@ -107,7 +105,7 @@ object NoteOfScaleAccidental extends ValueAccess[NoteOfScale] {
   def set(e: NoteOfScale, value: Int): NoteOfScale = e.copy(accidental = value)
 }
 
-case class Chord(time: Int, value: Int, ranks: Seq[Int]) extends ValueEvent[Chord] {
+case class Chord(time: Int, value: Int, ranks: Seq[(Int, Int)]) extends ValueEvent[Chord] { // rank of scale, accidental
   def copyWithTime(time: Int): Chord = copy(time = time)
   def copyWithValue(value: Int): Chord = copy(value = value)
 }

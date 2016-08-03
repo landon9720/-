@@ -39,7 +39,7 @@ object Abc extends scala.util.parsing.combinator.Parsers {
         case DottedCouplet(note1, note2, quantity) ⇒
           var multiplier: (Int, Int) = (1, 2)
           for (_ ← 1 until abs(quantity)) {
-            var (numerator, denominator) = multiplier
+            val (numerator, denominator) = multiplier
             multiplier = ((numerator * 2) + 1, denominator * 2)
           }
           val d1 = note1.d + (note1.d productWithRatio multiplier) * (if (quantity > 0) 1 else -1)

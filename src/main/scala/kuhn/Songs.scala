@@ -6,6 +6,8 @@ import kuhn.Song._
 import kuhn.ƒ._
 
 import scala.collection.mutable
+import scala.util.parsing.combinator.Parsers
+import scala.util.parsing.input.CharSequenceReader
 
 object Song1 extends Song {
   def part(a: Int, b: Int) = n(a+0, a+b) N
@@ -66,12 +68,6 @@ object Song5 extends Song {
     ((b(0, 1, 2, 3) * 5) map ConstValMod(NoteAttack, 50)) >
     ((b(0, 1, 2, 3) * 5) map ConstValMod(NoteAttack, 60)) >
     ((b(0, 1, 2, 3) * 5) map ConstValMod(NoteAttack, 70))
-}
-
-trait AbcSong extends Song {
-  def abc: String
-  def scale: Scale
-
 }
 
 object Song6 extends Song {
@@ -163,7 +159,7 @@ object Song14 extends Song {
     def apply(input: Sequence[Chord]): Sequence[NoteOfScale] = {
       val result = new mutable.ListBuffer[NoteOfScale]
       for (Chord(time, root, ranks) ← input.events) {
-        matrix.foreach { (colOffset, rowRank, colValue) ⇒
+        matrix foreach { (colOffset, rowRank, colValue) ⇒
           if (colValue != -1) {
             var rowRank1 = rowRank
             var octaves = 0
@@ -176,7 +172,9 @@ object Song14 extends Song {
               octaves += 1
             }
             val attack = 128 productWithRatio(colValue, 16)
-            result += NoteOfScale(time + colOffset*beats, root+scale.ranks.size*octaves+ranks(rowRank1), duration = 1*beats, attack = attack, release = attack)
+            val value = root + scale.ranks.size * octaves + ranks(rowRank1)._1
+            val accidental = ranks(rowRank1)._2
+            result += NoteOfScale(time + colOffset*beats, value, duration = 1*beats, attack = attack, release = attack, accidental = accidental)
           }
         }
       }
@@ -213,27 +211,39 @@ object Song14 extends Song {
   }
 
   val matrix = Matrix("""
-a a a a a a a a
-  a a a a a a a
-    a a a a a a
-      a a a a a
-        a a a a
-          a a a
-            a a
-              a """, offset = (0, -2))
+a
+a
+a
+a """)
 
-  def Triad(time: Int, root: Int) = Chord(time*beats, root, Seq(1, 3, 5).map(_-1))
+  object ChordBuilder extends Parsers {
+    def parse(in: String, time: Int, rankOfScale: Int, offset: Int = -1): Chord = {
+      Chord(time, rankOfScale, phrase(values)(new CharSequenceReader(in)) match {
+        case Success(values, _) ⇒ values map { case (a, b) ⇒ (a + offset, b) }
+        case n: NoSuccess ⇒ sys.error(n.toString)
+      })
+    }
+    def values = rep1sep(value, ',')
+    def value = rankOfScale ~ accidental ^^ { case a ~ b ⇒ (a, b) }
+    def rankOfScale = rep1(digit) ^^ { _.mkString.toInt }
+    def digit = acceptMatch("digit", { case c if "0123456789" contains c ⇒ c })
+    def accidental = sharp | flat | success(0)
+    def sharp = accept('+') ^^ { _ ⇒ 1 }
+    def flat = accept('-') ^^ { _ ⇒ -1 }
+    override type Elem = Char
+  }
 
   var _t = 0
   def t = {
     val r = _t
-    _t += matrix.width
+    _t += matrix.width*beats
     r
   }
 
   def song =
     StartOfChords >> ChordPart(ChordSequence(
-      Seq(1, 4, 1, 4, 5, 1).map(_-1) map { Triad(t, _) } :_*
+      ((0 to 7) map { ChordBuilder.parse("1,3,5,7-", t, _) }) ++
+      ((0 to 7) map { ChordBuilder.parse("1,3,5,7", t, _) }) :_*
     )) >> ChordsToNoteOfScales(matrix) >> NoteOfScalesToNotes(scale)
 
   val scale = MajorScale(C)
