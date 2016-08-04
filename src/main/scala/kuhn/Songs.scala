@@ -153,85 +153,99 @@ g>a |b2- b>g e2 (3fga | b>^ab>g e2 (3gfe | d3 e f3 g | a>f (3def a2 (3agf | e^de
   val scale = MinorScale(E)
 }
 
-object Song14 extends Song {
+case class MatrixNoteGenerator[T <: Event[T]](matrix: Matrix) extends Monad[T, NoteOfScale] {
+  def apply(ignored: Sequence[T]): Sequence[NoteOfScale] = {
+    val result = new mutable.ListBuffer[NoteOfScale]
+    matrix foreach { (x, y, value) ⇒
+      if (value != -1) {
+        val attack = 128 productWithRatio(value, 16)
+        result += NoteOfScale(x*beats, y, duration = 1*beats)
+      }
+    }
+    val duration = matrix.width
+    NoteOfScaleSequence(result.toList, duration)
+  }
+}
 
-  case class ChordsToNoteOfScales(matrix: Matrix) extends Monad[Chord, NoteOfScale] {
-    def apply(input: Sequence[Chord]): Sequence[NoteOfScale] = {
-      val result = new mutable.ListBuffer[NoteOfScale]
-      for (Chord(time, root, ranks) ← input.events) {
-        matrix foreach { (colOffset, rowRank, colValue) ⇒
-          if (colValue != -1) {
-            var rowRank1 = rowRank
-            var octaves = 0
-            while (rowRank1 < 0) {
-              rowRank1 += ranks.size
-              octaves -= 1
-            }
-            while (rowRank1 >= ranks.size) {
-              rowRank1 -= ranks.size
-              octaves += 1
-            }
-            val attack = 128 productWithRatio(colValue, 16)
-            val value = root + scale.ranks.size * octaves + ranks(rowRank1)._1
-            val accidental = ranks(rowRank1)._2
-            result += NoteOfScale(time + colOffset*beats, value, duration = 1*beats, attack = attack, release = attack, accidental = accidental)
+case class ChordsToNoteOfScales(matrix: Matrix) extends Monad[Chord, NoteOfScale] {
+  def apply(input: Sequence[Chord]): Sequence[NoteOfScale] = {
+    val result = new mutable.ListBuffer[NoteOfScale]
+    for (Chord(time, root, ranks) ← input.events) {
+      matrix foreach { (colOffset, rowRank, colValue) ⇒
+        if (colValue != -1) {
+          var rowRank1 = rowRank
+          var octaves = 0
+          while (rowRank1 < 0) {
+            rowRank1 += ranks.size
+            octaves -= 1
           }
+          while (rowRank1 >= ranks.size) {
+            rowRank1 -= ranks.size
+            octaves += 1
+          }
+          val attack = 128 productWithRatio(colValue, 16)
+          val value = root + 7 * octaves + ranks(rowRank1)._1
+          val accidental = ranks(rowRank1)._2
+          result += NoteOfScale(time + colOffset*beats, value, duration = 1*beats, attack = attack, release = attack, accidental = accidental)
         }
       }
-      val duration = matrix.width
-      NoteOfScaleSequence(result.toList, duration)
     }
+    val duration = matrix.width
+    NoteOfScaleSequence(result.toList, duration)
   }
+}
 
-  case class Matrix(rows: Seq[Seq[Int]], offset: (Int, Int)) {
-    assert(rows.tail.forall(_.size == rows.head.size))
-    val height = rows.size
-    val width = rows.head.size
-    val (offsetX, offsetY) = offset
-    val left = offsetX
-    val right = left + width
-    val top = offsetY
-    val bottom = top + height
-    def foreach(f: (Int, Int, Int) ⇒ Unit): Unit = {
-      for {
-        (row, rowIndex) ← rows.zipWithIndex
-        (cell, colIndex) ← row.zipWithIndex
-      } {
-        f(colIndex + offsetX, rowIndex + offsetY, cell)
-      }
+case class Matrix(rows: Seq[Seq[Int]], offset: (Int, Int)) {
+  assert(rows.tail.forall(_.size == rows.head.size))
+  val height = rows.size
+  val width = rows.head.size
+  val (offsetX, offsetY) = offset
+  val left = offsetX
+  val right = left + width
+  val top = offsetY
+  val bottom = top + height
+  def foreach(f: (Int, Int, Int) ⇒ Unit): Unit = {
+    for {
+      (row, rowIndex) ← rows.zipWithIndex
+      (cell, colIndex) ← row.zipWithIndex
+    } {
+      f(colIndex + offsetX, rowIndex + offsetY, cell)
     }
   }
+}
 
-  object Matrix {
-    def apply(asString: String, offset: (Int, Int) = (0, 0)): Matrix = {
-      val rows = asString.split("\n").filterNot(_.isEmpty)
-      val len = rows.maxBy(_.size).size
-      new Matrix(for (r ← rows) yield r.padTo(len, ' ').map(_.asDigit), offset)
-    }
+object Matrix {
+  def apply(asString: String, offset: (Int, Int) = (0, 0)): Matrix = {
+    val rows = asString.split("\n").filterNot(_.isEmpty)
+    val len = rows.maxBy(_.size).size
+    new Matrix(for (r ← rows) yield r.padTo(len, ' ').map(_.asDigit), offset)
   }
+}
+
+object ChordBuilder extends Parsers {
+  def parse(in: String, time: Int, rankOfScale: Int, offset: Int = -1): Chord = {
+    Chord(time, rankOfScale, phrase(values)(new CharSequenceReader(in)) match {
+      case Success(values, _) ⇒ values map { case (a, b) ⇒ (a + offset, b) }
+      case n: NoSuccess ⇒ sys.error(n.toString)
+    })
+  }
+  def values = rep1sep(value, ',')
+  def value = rankOfScale ~ accidental ^^ { case a ~ b ⇒ (a, b) }
+  def rankOfScale = rep1(digit) ^^ { _.mkString.toInt }
+  def digit = acceptMatch("digit", { case c if "0123456789" contains c ⇒ c })
+  def accidental = sharp | flat | success(0)
+  def sharp = accept('+') ^^ { _ ⇒ 1 }
+  def flat = accept('-') ^^ { _ ⇒ -1 }
+  override type Elem = Char
+}
+
+object Song14 extends Song {
 
   val matrix = Matrix("""
 a
 a
 a
 a """)
-
-  object ChordBuilder extends Parsers {
-    def parse(in: String, time: Int, rankOfScale: Int, offset: Int = -1): Chord = {
-      Chord(time, rankOfScale, phrase(values)(new CharSequenceReader(in)) match {
-        case Success(values, _) ⇒ values map { case (a, b) ⇒ (a + offset, b) }
-        case n: NoSuccess ⇒ sys.error(n.toString)
-      })
-    }
-    def values = rep1sep(value, ',')
-    def value = rankOfScale ~ accidental ^^ { case a ~ b ⇒ (a, b) }
-    def rankOfScale = rep1(digit) ^^ { _.mkString.toInt }
-    def digit = acceptMatch("digit", { case c if "0123456789" contains c ⇒ c })
-    def accidental = sharp | flat | success(0)
-    def sharp = accept('+') ^^ { _ ⇒ 1 }
-    def flat = accept('-') ^^ { _ ⇒ -1 }
-    override type Elem = Char
-  }
 
   var _t = 0
   def t = {
@@ -245,6 +259,31 @@ a """)
       ((0 to 7) map { ChordBuilder.parse("1,3,5,7-", t, _) }) ++
       ((0 to 7) map { ChordBuilder.parse("1,3,5,7", t, _) }) :_*
     )) >> ChordsToNoteOfScales(matrix) >> NoteOfScalesToNotes(scale)
+
+  val scale = MajorScale(C)
+}
+
+object Song15 extends Song {
+
+  val matrix = Matrix("""
+a              a         a
+ a
+  a              99
+   a                       99
+    a
+     a
+      a
+       a  a  a                               """)
+
+  var _t = 0
+  def t = {
+    val r = _t
+    _t += matrix.width*beats
+    r
+  }
+
+  def song =
+    StartOfNoteOfScales >> MatrixNoteGenerator(matrix) >> NoteOfScalesToNotes(scale)
 
   val scale = MajorScale(C)
 }
