@@ -298,7 +298,7 @@ object R extends Receiver {
       case Array(SongPositionPointer, lsb, msb) ⇒
         val v = lsb | (msb << 8)
         pos = v
-        println(s"Song Position = $pos")
+//        println(s"Song Position = $pos")
       case Array(TimingClock) ⇒
         for {
           messages ← midi.get(pos)
@@ -310,14 +310,15 @@ object R extends Receiver {
       case Array(n, _, _) if n >= NoteOff && n <= NoteOn16 ⇒ // ignore
       case Array(n, _, _) if n >= ControlChange && n <= ControlChange16 ⇒ // ignore
       case Array(n, _, _) if n >= PitchBend && n <= PitchBend16 ⇒ // ignore
-      case Array(Start) ⇒ println("Start")
-      case Array(Continue) ⇒ println("Continue")
-      case Array(Stop) ⇒ println("Stop")
-      case _ ⇒ println(s"${message.toDebugString} timeStamp=$timeStamp")
+//      case Array(Start) ⇒ println("Start")
+//      case Array(Continue) ⇒ println("Continue")
+      case Array(Stop) ⇒ pos = 0 //println("Stop")
+      case _ ⇒ //println(s"${message.toDebugString} timeStamp=$timeStamp")
     }
   }
   override def close(): Unit = {
-    println(s"close")
+    receiver.close
+//    println(s"close")
   }
 }
 
@@ -337,7 +338,7 @@ object MasterOut extends Monad[Note, Note] {
   }
   def apply(input: Sequence[Note]) = {
     R.midi = midi(input).toMap
-    println(s"R.midi.size = ${R.midi.size}")
+//    println(s"R.midi.size = ${R.midi.size}")
     NoteSequence.empty
   }
   MidiSystem.getTransmitter.setReceiver(R)

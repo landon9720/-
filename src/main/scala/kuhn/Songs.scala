@@ -1,10 +1,21 @@
 package kuhn
 
+import com.googlecode.lanterna.TerminalPosition
+import com.googlecode.lanterna.TextColor.RGB
+import com.googlecode.lanterna.gui2.Interactable.FocusChangeDirection.{DOWN, UP}
+import com.googlecode.lanterna.gui2.Interactable.{FocusChangeDirection, Result}
+import com.googlecode.lanterna.gui2._
+import com.googlecode.lanterna.input.KeyStroke
+import com.googlecode.lanterna.screen.TerminalScreen
+import com.googlecode.lanterna.terminal.DefaultTerminalFactory
+import com.googlecode.lanterna.TerminalPosition
 import kuhn.Monad._
 import kuhn.Scale._
 import kuhn.Song._
 import kuhn.ƒ._
 
+import scala.collection.JavaConversions._
+import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.CharSequenceReader
@@ -156,10 +167,11 @@ g>a |b2- b>g e2 (3fga | b>^ab>g e2 (3gfe | d3 e f3 g | a>f (3def a2 (3agf | e^de
 case class MatrixNoteGenerator[T <: Event[T]](matrix: Matrix) extends Monad[T, NoteOfScale] {
   def apply(ignored: Sequence[T]): Sequence[NoteOfScale] = {
     val result = new mutable.ListBuffer[NoteOfScale]
-    matrix foreach { (x, y, value) ⇒
+    matrix foreach { (x, y, valueString) ⇒
+      val value = valueString.charAt(0).asDigit
       if (value != -1) {
         val attack = 128 productWithRatio(value, 16)
-        result += NoteOfScale(x*beats, y, duration = 1*beats)
+        result += NoteOfScale(x*beats, y, duration = 1*beats, attack = attack)
       }
     }
     val duration = matrix.width
@@ -171,7 +183,8 @@ case class ChordsToNoteOfScales(matrix: Matrix) extends Monad[Chord, NoteOfScale
   def apply(input: Sequence[Chord]): Sequence[NoteOfScale] = {
     val result = new mutable.ListBuffer[NoteOfScale]
     for (Chord(time, root, ranks) ← input.events) {
-      matrix foreach { (colOffset, rowRank, colValue) ⇒
+      matrix foreach { (colOffset, rowRank, colValueString) ⇒
+        val colValue = colValueString.charAt(0).asDigit
         if (colValue != -1) {
           var rowRank1 = rowRank
           var octaves = 0
@@ -192,33 +205,6 @@ case class ChordsToNoteOfScales(matrix: Matrix) extends Monad[Chord, NoteOfScale
     }
     val duration = matrix.width
     NoteOfScaleSequence(result.toList, duration)
-  }
-}
-
-case class Matrix(rows: Seq[Seq[Int]], offset: (Int, Int)) {
-  assert(rows.tail.forall(_.size == rows.head.size))
-  val height = rows.size
-  val width = rows.head.size
-  val (offsetX, offsetY) = offset
-  val left = offsetX
-  val right = left + width
-  val top = offsetY
-  val bottom = top + height
-  def foreach(f: (Int, Int, Int) ⇒ Unit): Unit = {
-    for {
-      (row, rowIndex) ← rows.zipWithIndex
-      (cell, colIndex) ← row.zipWithIndex
-    } {
-      f(colIndex + offsetX, rowIndex + offsetY, cell)
-    }
-  }
-}
-
-object Matrix {
-  def apply(asString: String, offset: (Int, Int) = (0, 0)): Matrix = {
-    val rows = asString.split("\n").filterNot(_.isEmpty)
-    val len = rows.maxBy(_.size).size
-    new Matrix(for (r ← rows) yield r.padTo(len, ' ').map(_.asDigit), offset)
   }
 }
 
@@ -286,4 +272,89 @@ a              a         a
     StartOfNoteOfScales >> MatrixNoteGenerator(matrix) >> NoteOfScalesToNotes(scale)
 
   val scale = MajorScale(C)
+}
+
+object UI extends App {
+
+  var m1 = Matrix.apply("""
+aaaa
+    bbbb
+""")
+
+//  val m2 = Matrix.apply("""
+//12345
+//""")
+//
+//  val m3 = Matrix.apply("""
+//23456
+//""")
+
+  val terminal = new DefaultTerminalFactory().setForceTextTerminal(true).createTerminal()
+  val screen = new TerminalScreen(terminal)
+  screen.startScreen
+  val gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(new RGB(40, 10, 10)))
+  val window = new BasicWindow
+  window.setHints(List(Window.Hint.FULL_SCREEN, Window.Hint.NO_DECORATIONS))
+  window.setCloseWindowWithEscape(true)
+  val panel = new Panel(new LinearLayout(Direction.VERTICAL))
+  panel.addComponent(new MatrixComponent(m1))
+//  panel.addComponent(new MatrixComponent(m2))
+//  panel.addComponent(new MatrixComponent(m3))
+  window.setComponent(panel)//.withBorder(Borders.doubleLineBevel))
+//  window.setHints(List(Window.Hint.EXPANDED))
+
+
+  def buildSong(m: Matrix): Unit = {
+    MatrixNoteGenerator(m) >>
+//    MatrixNoteGenerator(m2) >>
+//    MatrixNoteGenerator(m3) >>
+    NoteOfScalesToNotes(MajorScale(C)) >> MasterOut apply NoteSequence.empty
+  }
+
+  buildSong(m1)
+
+
+  gui.addWindowAndWait(window)
+  R.close
+}
+
+class MatrixComponent(var matrix: Matrix) extends AbstractInteractableComponent[MatrixComponent] {
+  def createDefaultRenderer = new MatrixRenderer
+
+  override def handleKeyStroke(keyStroke: KeyStroke): Result = {
+    if (!keyStroke.isAltDown && !keyStroke.isCtrlDown && !keyStroke.isShiftDown) {
+      import com.googlecode.lanterna.input.KeyType._
+      return keyStroke.getKeyType match {
+        case ArrowLeft if cursorPosition.getColumn > 0 ⇒
+          cursorPosition = cursorPosition.withRelativeColumn(-1)
+          Result.HANDLED
+        case ArrowRight if cursorPosition.getColumn < matrix.width - 1 ⇒
+          cursorPosition = cursorPosition.withRelativeColumn(+1)
+          Result.HANDLED
+        case ArrowUp if cursorPosition.getRow > 0 ⇒
+          cursorPosition = cursorPosition.withRelativeRow(-1)
+          Result.HANDLED
+        case ArrowDown if cursorPosition.getRow < matrix.height - 1 ⇒
+          cursorPosition = cursorPosition.withRelativeRow(+1)
+          Result.HANDLED
+        case Character ⇒
+          matrix = matrix.copyWithValue(cursorPosition.getColumn, cursorPosition.getRow, keyStroke.getCharacter.toString)
+          UI.buildSong(matrix)
+          Result.HANDLED
+        case _ ⇒ super.handleKeyStroke(keyStroke)
+      }
+    }
+    super.handleKeyStroke(keyStroke)
+  }
+
+
+  override def afterEnterFocus(direction: FocusChangeDirection, previouslyInFocus: Interactable): Unit = {
+    previouslyInFocus match {
+      case p: MatrixComponent if direction == UP || direction == DOWN ⇒ cursorPosition = p.cursorPosition
+      case _ ⇒
+    }
+    super.afterEnterFocus(direction, previouslyInFocus)
+  }
+
+  var cursorPosition = TerminalPosition.TOP_LEFT_CORNER
 }
