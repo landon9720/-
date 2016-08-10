@@ -8,8 +8,9 @@ import scala.collection.mutable.ListBuffer
 object ƒ {
   val beats = 12
   implicit val NoteOfScaleValue_ = NoteOfScaleValue
+  type Ratio = (Int, Int)
   implicit class RichInt(i: Int) {
-    def productWithRatio(ratio: (Int, Int)): Int = {
+    def productWithRatio(ratio: Ratio): Int = {
       val (numerator, denominator) = ratio
       (i * numerator) / denominator
     }

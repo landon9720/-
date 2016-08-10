@@ -168,7 +168,7 @@ case class MatrixNoteGenerator[T <: Event[T]](matrix: Matrix) extends Monad[T, N
   def apply(ignored: Sequence[T]): Sequence[NoteOfScale] = {
     val result = new mutable.ListBuffer[NoteOfScale]
     matrix foreach { (x, y, valueString) ⇒
-      val value = valueString.charAt(0).asDigit
+      val value = valueString.asDigit
       if (value != -1) {
         val attack = 128 productWithRatio(value, 16)
         result += NoteOfScale(x*beats, y, duration = 1*beats, attack = attack)
@@ -184,7 +184,7 @@ case class ChordsToNoteOfScales(matrix: Matrix) extends Monad[Chord, NoteOfScale
     val result = new mutable.ListBuffer[NoteOfScale]
     for (Chord(time, root, ranks) ← input.events) {
       matrix foreach { (colOffset, rowRank, colValueString) ⇒
-        val colValue = colValueString.charAt(0).asDigit
+        val colValue = colValueString.asDigit
         if (colValue != -1) {
           var rowRank1 = rowRank
           var octaves = 0
@@ -274,87 +274,3 @@ a              a         a
   val scale = MajorScale(C)
 }
 
-object UI extends App {
-
-  var m1 = Matrix.apply("""
-aaaa
-    bbbb
-""")
-
-//  val m2 = Matrix.apply("""
-//12345
-//""")
-//
-//  val m3 = Matrix.apply("""
-//23456
-//""")
-
-  val terminal = new DefaultTerminalFactory().setForceTextTerminal(true).createTerminal()
-  val screen = new TerminalScreen(terminal)
-  screen.startScreen
-  val gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(new RGB(40, 10, 10)))
-  val window = new BasicWindow
-  window.setHints(List(Window.Hint.FULL_SCREEN, Window.Hint.NO_DECORATIONS))
-  window.setCloseWindowWithEscape(true)
-  val panel = new Panel(new LinearLayout(Direction.VERTICAL))
-  panel.addComponent(new MatrixComponent(m1))
-//  panel.addComponent(new MatrixComponent(m2))
-//  panel.addComponent(new MatrixComponent(m3))
-  window.setComponent(panel)//.withBorder(Borders.doubleLineBevel))
-//  window.setHints(List(Window.Hint.EXPANDED))
-
-
-  def buildSong(m: Matrix): Unit = {
-    MatrixNoteGenerator(m) >>
-//    MatrixNoteGenerator(m2) >>
-//    MatrixNoteGenerator(m3) >>
-    NoteOfScalesToNotes(MajorScale(C)) >> MasterOut apply NoteSequence.empty
-  }
-
-  buildSong(m1)
-
-
-  gui.addWindowAndWait(window)
-  R.close
-}
-
-class MatrixComponent(var matrix: Matrix) extends AbstractInteractableComponent[MatrixComponent] {
-  def createDefaultRenderer = new MatrixRenderer
-
-  override def handleKeyStroke(keyStroke: KeyStroke): Result = {
-    if (!keyStroke.isAltDown && !keyStroke.isCtrlDown && !keyStroke.isShiftDown) {
-      import com.googlecode.lanterna.input.KeyType._
-      return keyStroke.getKeyType match {
-        case ArrowLeft if cursorPosition.getColumn > 0 ⇒
-          cursorPosition = cursorPosition.withRelativeColumn(-1)
-          Result.HANDLED
-        case ArrowRight if cursorPosition.getColumn < matrix.width - 1 ⇒
-          cursorPosition = cursorPosition.withRelativeColumn(+1)
-          Result.HANDLED
-        case ArrowUp if cursorPosition.getRow > 0 ⇒
-          cursorPosition = cursorPosition.withRelativeRow(-1)
-          Result.HANDLED
-        case ArrowDown if cursorPosition.getRow < matrix.height - 1 ⇒
-          cursorPosition = cursorPosition.withRelativeRow(+1)
-          Result.HANDLED
-        case Character ⇒
-          matrix = matrix.copyWithValue(cursorPosition.getColumn, cursorPosition.getRow, keyStroke.getCharacter.toString)
-          UI.buildSong(matrix)
-          Result.HANDLED
-        case _ ⇒ super.handleKeyStroke(keyStroke)
-      }
-    }
-    super.handleKeyStroke(keyStroke)
-  }
-
-
-  override def afterEnterFocus(direction: FocusChangeDirection, previouslyInFocus: Interactable): Unit = {
-    previouslyInFocus match {
-      case p: MatrixComponent if direction == UP || direction == DOWN ⇒ cursorPosition = p.cursorPosition
-      case _ ⇒
-    }
-    super.afterEnterFocus(direction, previouslyInFocus)
-  }
-
-  var cursorPosition = TerminalPosition.TOP_LEFT_CORNER
-}

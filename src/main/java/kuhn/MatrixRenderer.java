@@ -29,8 +29,8 @@ public class MatrixRenderer implements InteractableRenderer<MatrixComponent> {
         }
         for (int x = 0; x < component.matrix().width(); x++) {
             for (int y = 0; y < component.matrix().height(); y++) {
-                String value = component.matrix().apply(x, y);
-                graphics.putString(x, y, value);
+                Character value = component.matrix().apply(x, y);
+                graphics.putString(x, y, value.toString());
             }
         }
     }
