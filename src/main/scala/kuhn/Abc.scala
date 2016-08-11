@@ -7,55 +7,55 @@ import scala.util.parsing.input.CharSequenceReader
 
 object Abc extends scala.util.parsing.combinator.Parsers {
 
-  def parse[T <: Event[T]](in: String, scale: Scale): NoteOfScalePart[NoteOfScale] = {
-    val items = phrase(sequence)(new CharSequenceReader(in)) match {
-      case Success(items, _) ⇒ items
-      case n: NoSuccess ⇒ sys.error(n.toString)
-    }
-    var time = 0
-    var result = List.empty[NoteOfScale]
-    for (item ← items) yield {
-      item match {
-        case v: Note ⇒
-          if (!v.rest) {
-            result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(v, scale), duration = v.d, accidental = v.a)
-          }
-          time += v.duration.map(_.value).getOrElse(1*beats)
-        case Chord(notes) ⇒
-          notes foreach { v ⇒
-            if (!v.rest) {
-              result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(v, scale), duration = v.d, accidental = v.a)
-            }
-          }
-          time += notes.maxBy(_.d).d
-        case Tuplet(numberOfNotes, inTheTimeOf, _, notes) ⇒
-          notes foreach { v ⇒
-            val duration = v.d productWithRatio (inTheTimeOf, numberOfNotes)
-            if (!v.rest) {
-              result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(v, scale), duration = duration, accidental = v.a)
-            }
-            time += duration
-          }
-        case DottedCouplet(note1, note2, quantity) ⇒
-          var multiplier: (Int, Int) = (1, 2)
-          for (_ ← 1 until abs(quantity)) {
-            val (numerator, denominator) = multiplier
-            multiplier = ((numerator * 2) + 1, denominator * 2)
-          }
-          val d1 = note1.d + (note1.d productWithRatio multiplier) * (if (quantity > 0) 1 else -1)
-          val d2 = note2.d + (note2.d productWithRatio multiplier) * (if (quantity < 0) 1 else -1)
-          if (!note1.rest) {
-            result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(note1, scale), duration = d1, accidental = note1.a)
-          }
-          time += d1
-          if (!note2.rest) {
-            result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(note2, scale), duration = d2, accidental = note2.a)
-          }
-          time += d2
-      }
-    }
-    NoteOfScalePart(NoteOfScaleSequence(result, time))
-  }
+//  def parse[T <: Event[T]](in: String, scale: Scale): NoteOfScalePart[NoteOfScale] = {
+//    val items = phrase(sequence)(new CharSequenceReader(in)) match {
+//      case Success(items, _) ⇒ items
+//      case n: NoSuccess ⇒ sys.error(n.toString)
+//    }
+//    var time = 0
+//    var result = List.empty[NoteOfScale]
+//    for (item ← items) yield {
+//      item match {
+//        case v: Note ⇒
+//          if (!v.rest) {
+//            result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(v, scale), duration = v.d, accidental = v.a)
+//          }
+//          time += v.duration.map(_.value).getOrElse(1*beats)
+//        case Chord(notes) ⇒
+//          notes foreach { v ⇒
+//            if (!v.rest) {
+//              result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(v, scale), duration = v.d, accidental = v.a)
+//            }
+//          }
+//          time += notes.maxBy(_.d).d
+//        case Tuplet(numberOfNotes, inTheTimeOf, _, notes) ⇒
+//          notes foreach { v ⇒
+//            val duration = v.d productWithRatio (inTheTimeOf, numberOfNotes)
+//            if (!v.rest) {
+//              result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(v, scale), duration = duration, accidental = v.a)
+//            }
+//            time += duration
+//          }
+//        case DottedCouplet(note1, note2, quantity) ⇒
+//          var multiplier: (Int, Int) = (1, 2)
+//          for (_ ← 1 until abs(quantity)) {
+//            val (numerator, denominator) = multiplier
+//            multiplier = ((numerator * 2) + 1, denominator * 2)
+//          }
+//          val d1 = note1.d + (note1.d productWithRatio multiplier) * (if (quantity > 0) 1 else -1)
+//          val d2 = note2.d + (note2.d productWithRatio multiplier) * (if (quantity < 0) 1 else -1)
+//          if (!note1.rest) {
+//            result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(note1, scale), duration = d1, accidental = note1.a)
+//          }
+//          time += d1
+//          if (!note2.rest) {
+//            result :+= NoteOfScale(time = time, value = abcValueToNoteOfScaleRank(note2, scale), duration = d2, accidental = note2.a)
+//          }
+//          time += d2
+//      }
+//    }
+//    NoteOfScalePart(NoteOfScaleSequence(result, time))
+//  }
 
   private def abcValueToNoteOfScaleRank(v: Note, scale: Scale): Int = {
     val letters = Array('C', 'D', 'E', 'F', 'G', 'A', 'B')

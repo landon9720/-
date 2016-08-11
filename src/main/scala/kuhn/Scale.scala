@@ -16,19 +16,19 @@ case class Scale(steps: String, root: Int) {
     }
     r.toArray
   }
-  def apply(n: NoteOfScale): Note = {
-    var rank = n.value
-    var octave = 0
-    while (rank < 0) {
-      rank += ranks.size
-      octave -= 1
-    }
-    while (rank >= ranks.size) {
-      rank -= ranks.size
-      octave += 1
-    }
-    Note(n.time, root + ranks(rank) + octave * 12 + n.accidental, n.duration, n.attack, n.release)
-  }
+//  def apply(n: NoteOfScale): Note = {
+//    var rank = n.value
+//    var octave = 0
+//    while (rank < 0) {
+//      rank += ranks.size
+//      octave -= 1
+//    }
+//    while (rank >= ranks.size) {
+//      rank -= ranks.size
+//      octave += 1
+//    }
+//    Note(n.time, root + ranks(rank) + octave * 12 + n.accidental, n.duration, n.attack, n.release)
+//  }
 }
 object Scale {
   def MajorScale(root: Int) = Scale("WWHWWW", root)
