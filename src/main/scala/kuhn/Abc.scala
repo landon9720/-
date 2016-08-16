@@ -61,7 +61,7 @@ object Abc extends scala.util.parsing.combinator.Parsers {
     val letters = Array('C', 'D', 'E', 'F', 'G', 'A', 'B')
     val inputLetter = letters.indexWhere(_ == v.v)
     assert(inputLetter != -1)
-    val scaleLetter = letters.indexWhere(_ == Array("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B").apply(scale.root % 12).charAt(0))
+    val scaleLetter = 'C' //.indexWhere(_ == Array("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B").apply(scale.root % 12).charAt(0))
     assert(scaleLetter != -1)
     val degree =
       if (inputLetter >= scaleLetter) inputLetter - scaleLetter

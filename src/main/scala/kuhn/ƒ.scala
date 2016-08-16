@@ -14,6 +14,9 @@ object ƒ {
       (i * numerator) / denominator
     }
   }
+  implicit class RichRatio(ratio: Ratio) {
+    def invert = (ratio._2, ratio._1)
+  }
 }
 import ƒ._
 
@@ -23,18 +26,24 @@ case class Value(time: Int, duration: Int, value: Int, octave: Int, accidental: 
 }
 
 case class Sequence(
-  val events: Seq[Value],
-  val duration: Int
+  val values: Seq[Value]
 ) {
+  val duration = {
+    if (values.nonEmpty) {
+      val e = values.maxBy(_.duration)
+      e.time + e.duration
+    }
+    else 0
+  }
   override def toString = (
-    for (e ← events) yield s"$e"
+    for (e ← values) yield s"$e"
   ).mkString("events\n", "\n", s"\nduration=$duration")
   def transport(delta: Int) =
-    copy(for (e ← events) yield e.copyWithTime(delta + e.time), delta + duration)
+    copy(for (e ← values) yield e.copyWithTime(delta + e.time))
 }
 
 object Sequence {
-  val empty = new Sequence(Seq.empty, 0)
+  val empty = new Sequence(Seq.empty)
 }
 
 trait Monad {
@@ -50,13 +59,13 @@ object Monad {
       input: Sequence ⇒
         val s0 = m0(input)
         val s1 = m1(input)
-        s0.copy(s0.events ++ s1.events, max(s0.duration, s1.duration))
+        s0.copy(s0.values ++ s1.values)
     }
     def >(m1: Monad): Monad = {
       input: Sequence ⇒
         val s0 = m0(input)
         val s1 = m1(input)
-        s0.copy(s0.events ++ s1.transport(s0.duration).events, s0.duration + s1.duration)
+        s0.copy(s0.values ++ s1.transport(s0.duration).values)
     }
     def >>(m1: Monad): Monad = {
       input: Sequence ⇒
@@ -73,13 +82,13 @@ object Monad {
     def **(scale: Int): Monad = {
       input: Sequence ⇒
         val s0 = m0(input)
-        s0.copy(s0.events map { e ⇒ e.copyWithTime(e.time * scale) }, s0.duration * scale)
+        s0.copy(s0.values map { e ⇒ e.copyWithTime(e.time * scale) })
     }
     def **:(scale: Int) = **(scale)
     def */(scale: Int): Monad = {
       input: Sequence ⇒
         val s0 = m0(input)
-        s0.copy(s0.events map { e ⇒ e.copyWithTime(e.time / scale) }, s0.duration / scale)
+        s0.copy(s0.values map { e ⇒ e.copyWithTime(e.time / scale) })
     }
     def */:(scale: Int) = **(scale)
     def normalize(to: Int): Monad = {
@@ -159,14 +168,18 @@ class MidiReceiver(positionUpdate: Int ⇒ Unit) extends Receiver {
   }
 }
 
-class MasterOut(receiver: MidiReceiver) extends Monad {
+case class StartHere(input: Sequence) extends Monad {
+  override def apply(ignored: Sequence): Sequence = input
+}
+
+case class MasterOut(receiver: MidiReceiver) extends Monad {
   private def midi(notes: Sequence): collection.Map[Int, List[MidiMessage]] = {
     val result = new mutable.HashMap[Int, ListBuffer[MidiMessage]]
     def put(time: Int, m: ShortMessage) = {
       if (!result.contains(time)) result += time → new ListBuffer[MidiMessage]
       result(time) += m
     }
-    for (Value(time, duration, value, octave, accidental, attack, attackFine, release, releaseFine) ← notes.events) {
+    for (Value(time, duration, value, octave, accidental, attack, attackFine, release, releaseFine) ← notes.values) {
       val end = time + duration
       val midiRoot = 60
       val note = midiRoot + octave * 12 + value + accidental

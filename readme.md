@@ -14,8 +14,11 @@ Getting Started
 Build:
 
 ```
+zinc -start
 sbt start-script
 ```
+
+(Zinc is optional.)
 
 Run:
 
@@ -281,3 +284,4 @@ A matrix defines a timeseries of notes using a variety of abstractions
 
 
 
+zinc -start
