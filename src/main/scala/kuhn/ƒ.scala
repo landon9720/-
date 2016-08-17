@@ -17,6 +17,14 @@ object ƒ {
   implicit class RichRatio(ratio: Ratio) {
     def invert = (ratio._2, ratio._1)
   }
+  def say(s: String) {
+    val p = new java.io.PrintWriter("ƒ.log")
+    try {
+      p.println(s)
+    } finally {
+      p.close()
+    }
+  }
 }
 import ƒ._
 
@@ -149,8 +157,10 @@ class MidiReceiver(positionUpdate: Int ⇒ Unit) extends Receiver {
         for {
           messages ← midi.get(pos)
           message ← messages
-        } {
+        } try {
           receiver.send(message, -1)
+        } catch {
+          case ex: Exception ⇒ say(s"Failed sending MIDI message with exception: $ex")
         }
         positionUpdate(pos)
         pos += 1
@@ -185,8 +195,12 @@ case class MasterOut(receiver: MidiReceiver) extends Monad {
       val note = midiRoot + octave * 12 + value + accidental
       val a = attack * 8
       val r = release * 8
-      put(time, new ShortMessage(ShortMessage.NOTE_ON, 0, note, a))
-      put(end, new ShortMessage(ShortMessage.NOTE_OFF, 0, note, r))
+      try {
+        put(time, new ShortMessage(ShortMessage.NOTE_ON, 0, note, a))
+        put(end, new ShortMessage(ShortMessage.NOTE_OFF, 0, note, r))
+      } catch {
+        case ex: Exception ⇒ say(s"Failed creating MIDI message with exception: $ex")
+      }
     }
     result.mapValues(_.toList).toMap
   }

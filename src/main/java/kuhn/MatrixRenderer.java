@@ -22,11 +22,6 @@ public class MatrixRenderer implements InteractableRenderer<Matrix> {
         return new TerminalSize(140, 3 + component.rows().size());
     }
 
-    private <T> T opt(scala.Option<T> o, T orElse) {
-        if (o.isDefined()) return o.get();
-        else return orElse;
-    }
-
     @Override
     public void drawComponent(TextGUIGraphics graphics, Matrix component) {
 
@@ -45,12 +40,12 @@ public class MatrixRenderer implements InteractableRenderer<Matrix> {
         for (int x = 0; x < width; x++) {
             TextColor bg;
             if ((x + colViewOffset) % component.gridX() == 0) {
-                bg = GRID_Y_STRIPE_BG;
+                bg = kuhn.Colors.GRID_Y_STRIPE_BG();
             } else {
-                bg = BG;
+                bg = kuhn.Colors.BG();
             }
             if (component.showTransportControl() && x + colViewOffset == component.transportLocationScaled()) {
-                bg = TRANSPORT_CURSOR_BG;
+                bg = kuhn.Colors.TRANSPORT_CURSOR_BG();
             }
             graphics.setBackgroundColor(bg);
             graphics.putString(1 + originX + x, originY, "-");
@@ -77,7 +72,7 @@ public class MatrixRenderer implements InteractableRenderer<Matrix> {
                 if (!val.negative()) graphics.applyThemeStyle(component.getThemeDefinition().getCustom("value"));
                 else                 graphics.applyThemeStyle(component.getThemeDefinition().getCustom("value_negative"));
                 if ((x + colViewOffset) % component.gridX() == 0) {
-                    graphics.setBackgroundColor(GRID_Y_STRIPE_BG);
+                    graphics.setBackgroundColor(kuhn.Colors.GRID_Y_STRIPE_BG());
                 }
                 graphics.putString(1 + originX + x, 1 + originY + y0, Character.toString(val.value()));
                 y0++;
@@ -89,10 +84,5 @@ public class MatrixRenderer implements InteractableRenderer<Matrix> {
         int w = max(component.name().length(), 20);
         return new TerminalPosition(w, 2);
     }
-
-    public static final TextColor FG = new TextColor.RGB(127, 127, 127);
-    public static final TextColor BG = new TextColor.RGB(0, 0, 0);
-    public static final TextColor GRID_Y_STRIPE_BG = new TextColor.RGB(40, 40, 40);
-    public static final TextColor TRANSPORT_CURSOR_BG = new TextColor.RGB(100, 40, 40);
 
 }

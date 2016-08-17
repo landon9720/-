@@ -153,7 +153,12 @@ class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val
   def asScale: Monad = {
     val binary = rowMap("value").toIterator.takeWhile(v ⇒ v.value == '0' || v.value == '1')
     val ranks = binary.zipWithIndex.filter(_._1.value == '1').map(_._2).toList // indexes of 1's
-    Scale(ranks)
+    if (ranks.nonEmpty) {
+      Scale(ranks)
+    } else {
+      say(s"I do not understand the matrix $name")
+      Scale(0 to 12 toList)
+    }
   }
 
   override def afterEnterFocus(direction: FocusChangeDirection, previouslyInFocus: Interactable): Unit = {

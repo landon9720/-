@@ -34,6 +34,16 @@ References
 * <http://abcnotation.com/wiki/abc:standard:v2.1>
 * <https://github.com/mabe02/lanterna>
 
+To-do
+=====
+
+* chord matrix
+* Multi-line value entry mode
+* Change time scale
+* Don't crash on invalid MIDI (logging?)
+* git-friendly state persistence
+* insert cursor mode, cursor position indicator
+
 Dimensions
 ----------
 

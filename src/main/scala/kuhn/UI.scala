@@ -11,6 +11,7 @@ import com.googlecode.lanterna.input.KeyType._
 import com.googlecode.lanterna.input.{KeyStroke, KeyType}
 import com.googlecode.lanterna.screen.TerminalScreen
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory
+import kuhn.Colors._
 import kuhn.ƒ._
 import kuhn.Monad._
 
@@ -46,9 +47,9 @@ object UI extends App {
     }
   }
   window.setHints(List(Window.Hint.FULL_SCREEN, Window.Hint.NO_DECORATIONS))
-  object Theme extends SimpleTheme(MatrixRenderer.FG, MatrixRenderer.BG) {
-    getDefaultDefinition.setCustom("value", new TextColor.RGB(140, 140, 140), MatrixRenderer.BG)
-    getDefaultDefinition.setCustom("value_negative", new TextColor.RGB(140, 140, 140), MatrixRenderer.BG, SGR.UNDERLINE)
+  object Theme extends SimpleTheme(FG, BG) {
+    getDefaultDefinition.setCustom("value", FG_VALUE, BG)
+    getDefaultDefinition.setCustom("value_negative", FG_VALUE, BG, SGR.UNDERLINE)
   }
   window.setTheme(Theme)
   val layoutManager = new LinearLayout
