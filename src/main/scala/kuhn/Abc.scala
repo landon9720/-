@@ -57,7 +57,7 @@ object Abc extends scala.util.parsing.combinator.Parsers {
 //    NoteOfScalePart(NoteOfScaleSequence(result, time))
 //  }
 
-  private def abcValueToNoteOfScaleRank(v: Note, scale: Scale): Int = {
+  private def abcValueToNoteOfScaleRank(v: Note, scale: RankScale): Int = {
     val letters = Array('C', 'D', 'E', 'F', 'G', 'A', 'B')
     val inputLetter = letters.indexWhere(_ == v.v)
     assert(inputLetter != -1)

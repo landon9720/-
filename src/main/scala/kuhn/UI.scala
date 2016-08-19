@@ -1,5 +1,6 @@
 package kuhn
 
+import java.io.Serializable
 import java.lang.Math.{max, min}
 import javax.sound.midi.MidiSystem
 
@@ -9,7 +10,7 @@ import com.googlecode.lanterna.gui2.Interactable.{FocusChangeDirection, Result}
 import com.googlecode.lanterna.gui2._
 import com.googlecode.lanterna.input.KeyType._
 import com.googlecode.lanterna.input.{KeyStroke, KeyType}
-import com.googlecode.lanterna.screen.TerminalScreen
+import com.googlecode.lanterna.screen.{VirtualScreen, TerminalScreen}
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory
 import kuhn.Colors._
 import kuhn.ƒ._
@@ -20,11 +21,37 @@ import scala.collection._
 
 object UI extends App {
 
-  val m0 = new Matrix("m0", List(Row("value", "101011010101")), changeHandler, showTransportControl = false, scale = (1, 1))
+  val m0 = new Matrix("scale", List(Row(Left("value"), "101011010101")), changeHandler, showTransportControl = false, scale = (1, 1), multilineValueValue = "")
 
-  val top = List(Row("duration"), Row("value"), Row("octave"), Row("accidental"), Row("attack"), Row("release"))
-  val m1 = new Matrix("m1", top, changeHandler)
-  val m2 = new Matrix("m2", top, changeHandler)
+  val top: List[Row] = List(
+    Row(Left("duration")),
+    Row(Left("value")),
+    Row(Left("octave")),
+    Row(Right(Val('9', negative = false))),
+    Row(Right(Val('8', negative = false))),
+    Row(Right(Val('7', negative = false))),
+    Row(Right(Val('6', negative = false))),
+    Row(Right(Val('5', negative = false))),
+    Row(Right(Val('4', negative = false))),
+    Row(Right(Val('3', negative = false))),
+    Row(Right(Val('2', negative = false))),
+    Row(Right(Val('1', negative = false))),
+    Row(Right(Val('0', negative = false))),
+    Row(Right(Val('1', negative = true))),
+    Row(Right(Val('2', negative = true))),
+    Row(Right(Val('3', negative = true))),
+    Row(Right(Val('4', negative = true))),
+    Row(Right(Val('5', negative = true))),
+    Row(Right(Val('6', negative = true))),
+    Row(Right(Val('7', negative = true))),
+    Row(Right(Val('8', negative = true))),
+    Row(Right(Val('9', negative = true))),
+    Row(Left("accidental")),
+    Row(Left("attack")),
+    Row(Left("release"))
+  )
+  val m1 = new Matrix("degree_of_scale", top, changeHandler, multilineValueValue = "duration")
+  val m2 = new Matrix("m2", top, changeHandler, multilineValueValue = "attack")
 
   val matrixies = List(m0, m1, m2)
 

@@ -14,6 +14,7 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory
 import kuhn.ƒ._
 import kuhn.Monad._
 
+import scala.Predef
 import scala.collection.JavaConversions._
 import scala.collection._
 
@@ -30,9 +31,13 @@ object Val {
 }
 
 case class Row(
-  name: String,
+  key: Either[String, Val],
   values: Map[Int, Val] = Map.empty
   ) {
+  val name = key match {
+    case Left(name) ⇒ name
+    case Right(Val(v, neg)) ⇒ s"${if (neg) "-" else ""}$v"
+  }
   def valAt(x: Int): Val = values.getOrElse(x, Val.Empty)
   def optValAt(x: Int): Option[Val] = valAt(x) match {
     case Val(' ', _) ⇒ None
@@ -53,15 +58,15 @@ case class Row(
 }
 
 object Row {
-  def apply(name: String, string: String) =
-    string.zipWithIndex.foldLeft(new Row(name)) {
+  def apply(key: Either[String, Val]): Row = apply(key, "")
+  def apply(key: Either[String, Val], string: String): Row =
+    string.zipWithIndex.foldLeft(new Row(key)) {
       case (a: Row, (v: Char, i: Int)) ⇒
         a.copyWithValue(i, Val(v))
     }
-
 }
 
-class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val showTransportControl: Boolean = true, var scale: Ratio = (4, 1)) extends AbstractInteractableComponent[Matrix] {
+class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val showTransportControl: Boolean = true, var scale: Ratio = (4, 1), multilineValueValue: String) extends AbstractInteractableComponent[Matrix] {
 
   var gridX = 1*beats
   var transportLocation = 0
@@ -72,7 +77,8 @@ class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val
   def valAt(x: Int, y: Int) = rows(y).valAt(x)
   def updateValAt(x: Int, y: Int, v: Val) { rows = rows.updated(y, rows(y).copyWithValue(x, v)) }
   def clearRow(y: Int) { rows = rows.updated(y, rowAt(y).clear) }
-  def rowMap = (for (r ← rows) yield r.name → r).toMap.withDefault(Row(_))
+  def rowMap = (for (r ← rows) yield r.name → r).toMap.withDefault(k ⇒ Row(Left(k)))
+  def multilineValueMap: Map[Val, Row] = (for (r ← rows if r.key.isRight) yield r.key.right.get → r).toMap
 
   def createDefaultRenderer = new MatrixRenderer
 
@@ -137,7 +143,7 @@ class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val
       map("duration").optIntValAt(x).foreach(d0 ⇒ d = d0 productWithRatio scale)
       val value = map("value").optIntValAt(x)
       map("octave").optIntValAt(x).foreach(o = _)
-      val a = map("accidental").optIntValAt(x).getOrElse(0)
+      var a = map("accidental").optIntValAt(x).getOrElse(0)
       map("attack").optIntValAt(x).foreach(attack = _)
       map("attack_fine").optIntValAt(x).foreach(attackFine = _)
       map("release").optIntValAt(x).foreach(release = _)
@@ -145,6 +151,23 @@ class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val
       value match {
         case Some(v) ⇒ values += Value(time, d, v, o, a, attack, attackFine, release, releaseFine)
         case _ ⇒
+      }
+      for ((keyValue, row) ← multilineValueMap) {
+        val secondaryValue = row.optIntValAt(x)
+        secondaryValue match {
+          case Some(v) ⇒
+            multilineValueValue match {
+              case "duration" ⇒ d = v
+              case "octave" ⇒ o = v
+              case "accidental" ⇒ a = v
+              case "attack" ⇒ attack = v
+              case "attack_fine" ⇒ attackFine = v
+              case "release" ⇒ release = v
+              case "release_fine" ⇒ releaseFine = v
+            }
+            values += Value(time, d, keyValue.toInt, o, a, attack, attackFine, release, releaseFine)
+          case _ ⇒
+        }
       }
     }
     Sequence(values)
@@ -154,10 +177,12 @@ class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val
     val binary = rowMap("value").toIterator.takeWhile(v ⇒ v.value == '0' || v.value == '1')
     val ranks = binary.zipWithIndex.filter(_._1.value == '1').map(_._2).toList // indexes of 1's
     if (ranks.nonEmpty) {
-      Scale(ranks)
+      RankScale(ranks)
     } else {
-      say(s"I do not understand the matrix $name")
-      Scale(0 to 12 toList)
+      say(s"Ok, I do not understand the matrix $name")
+      new Scale {
+        def apply(input: Sequence): Sequence = Sequence.empty
+      }
     }
   }
 

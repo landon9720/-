@@ -43,6 +43,7 @@ To-do
 * Don't crash on invalid MIDI (logging?)
 * git-friendly state persistence
 * insert cursor mode, cursor position indicator
+* bring back ABC
 
 Dimensions
 ----------

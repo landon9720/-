@@ -26,8 +26,9 @@ object Colors {
 
   val FG_VALUE = new TextColor.RGB(248, 236, 201)
   val FG = FG_VALUE.darker
+  val FG_AXIS = FG.darker
   val BG = new TextColor.RGB(107, 83, 68).darker.darker
-  val GRID_Y_STRIPE_BG = BG scale 0.9
-  val TRANSPORT_CURSOR_BG = new TextColor.RGB(244, 183, 184).darker.darker
+  val GRID_Y_STRIPE_BG = BG scale 0.8
+  val TRANSPORT_CURSOR_BG = new TextColor.RGB(120, 30, 20)
 
 }

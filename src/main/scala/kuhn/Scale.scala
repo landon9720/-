@@ -1,6 +1,8 @@
 package kuhn
 
-case class Scale(ranks: List[Int]) extends Monad {
+trait Scale extends Monad
+
+case class RankScale(ranks: List[Int]) extends Scale {
   override def apply(input: Sequence): Sequence =
     Sequence(for (value ← input.values) yield {
       var rank = value.value

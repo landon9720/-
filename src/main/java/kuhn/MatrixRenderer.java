@@ -8,6 +8,8 @@ import com.googlecode.lanterna.gui2.TextGUIGraphics;
 
 import static java.lang.Math.max;
 
+import kuhn.Colors.*;
+
 public class MatrixRenderer implements InteractableRenderer<Matrix> {
 
     @Override
@@ -35,7 +37,9 @@ public class MatrixRenderer implements InteractableRenderer<Matrix> {
         final int height = component.rows().size();
 
         // labels and axises
+        graphics.setForegroundColor(kuhn.Colors.FG_AXIS());
         graphics.putString(origin.getColumn(), origin.getRow(), "+");
+        graphics.setForegroundColor(kuhn.Colors.FG());
         graphics.putString(origin.getColumn() - component.name().length(), origin.getRow(), component.name());
         for (int x = 0; x < width; x++) {
             TextColor bg;
@@ -48,7 +52,9 @@ public class MatrixRenderer implements InteractableRenderer<Matrix> {
                 bg = kuhn.Colors.TRANSPORT_CURSOR_BG();
             }
             graphics.setBackgroundColor(bg);
+            graphics.setForegroundColor(kuhn.Colors.FG_AXIS());
             graphics.putString(1 + originX + x, originY, "-");
+            graphics.setForegroundColor(kuhn.Colors.FG());
             if (x + colViewOffset < 0) continue;
             if ((x + colViewOffset) % 10 == 0) {
                 graphics.putString(1 + originX + x, originY - 2, String.valueOf((x + colViewOffset) % 100 / 10));
@@ -58,8 +64,9 @@ public class MatrixRenderer implements InteractableRenderer<Matrix> {
             graphics.putString(1 + originX + x, originY - 1, String.valueOf((x + colViewOffset) % 10));
         }
         for (int y = 0, y0 = 0; y < height; y++) {
-            graphics.putString(0, 1 + origin.getRow() + y0, component.rows().apply(y).name());
             graphics.applyThemeStyle(component.getThemeDefinition().getNormal());
+            graphics.putString(0, 1 + origin.getRow() + y0, component.rows().apply(y).name());
+            graphics.setForegroundColor(kuhn.Colors.FG_AXIS());
             graphics.putString(origin.getColumn(), 1 + origin.getRow() + y0, "|");
             y0++;
         }
