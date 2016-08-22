@@ -3,8 +3,11 @@ package kuhn
 import java.io.Serializable
 import java.lang.Math.{max, min}
 import javax.sound.midi.MidiSystem
+import javax.swing.JFrame
 
-import com.googlecode.lanterna.{SGR, TextColor}
+import com.googlecode.lanterna.screen.Screen.RefreshType
+import com.googlecode.lanterna.terminal.swing._
+import com.googlecode.lanterna.{TerminalSize, SGR, TextColor}
 import com.googlecode.lanterna.graphics.SimpleTheme
 import com.googlecode.lanterna.gui2.Interactable.{FocusChangeDirection, Result}
 import com.googlecode.lanterna.gui2._
@@ -21,7 +24,7 @@ import scala.collection._
 
 object UI extends App {
 
-  val m0 = new Matrix("scale", List(Row(Left("value"), "101011010101")), changeHandler, showTransportControl = false, scale = (1, 1), multilineValueValue = "")
+  val scaleMatrix = new Matrix("scale", List(Row(Left("value"), "101011010101")), changeHandler, showTransportControl = false, scale = (1, 1), multilineValueValue = "")
 
   val top: List[Row] = List(
     Row(Left("duration")),
@@ -50,13 +53,38 @@ object UI extends App {
     Row(Left("attack")),
     Row(Left("release"))
   )
-  val m1 = new Matrix("degree_of_scale", top, changeHandler, multilineValueValue = "duration")
-  val m2 = new Matrix("m2", top, changeHandler, multilineValueValue = "attack")
+  val degreeOfScale = new Matrix("degree of scale", top, changeHandler, multilineValueValue = "duration")
 
-  val matrixies = List(m0, m1, m2)
+  val chordMatrix = new Matrix("chord", List(Row(Left("value"), "1010100")), changeHandler, showTransportControl = false, scale = (1, 1), multilineValueValue = "")
+
+  val top2: List[Row] = List(
+    Row(Left("duration")),
+    Row(Left("value")),
+    Row(Left("octave")),
+    Row(Right(Val('6', negative = false))),
+    Row(Right(Val('5', negative = false))),
+    Row(Right(Val('4', negative = false))),
+    Row(Right(Val('3', negative = false))),
+    Row(Right(Val('2', negative = false))),
+    Row(Right(Val('1', negative = false))),
+    Row(Right(Val('0', negative = false))),
+    Row(Right(Val('1', negative = true))),
+    Row(Right(Val('2', negative = true))),
+    Row(Right(Val('3', negative = true))),
+    Row(Right(Val('4', negative = true))),
+    Row(Right(Val('5', negative = true))),
+    Row(Right(Val('6', negative = true))),
+    Row(Left("accidental")),
+    Row(Left("attack")),
+    Row(Left("release"))
+  )
+  val degreeOfChord = new Matrix("degree of chord", top2, changeHandler, multilineValueValue = "duration")
+
+  val matrixies = List(scaleMatrix, degreeOfScale, chordMatrix, degreeOfChord)
 
   System.setProperty("apple.awt.UIElement", "true")
-  val terminal = new DefaultTerminalFactory().createTerminal()
+  val factory = new DefaultTerminalFactory()
+  val terminal = factory.createSwingTerminal()
   val screen = new TerminalScreen(terminal)
   screen.startScreen()
   val gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace)
@@ -73,13 +101,15 @@ object UI extends App {
       }
     }
   }
-  window.setHints(List(Window.Hint.FULL_SCREEN, Window.Hint.NO_DECORATIONS))
+  window.setHints(List(Window.Hint.NO_DECORATIONS, Window.Hint.NO_POST_RENDERING))
+//  window.setSize(terminal.getTerminalSize.withRows(300))
   object Theme extends SimpleTheme(FG, BG) {
     getDefaultDefinition.setCustom("value", FG_VALUE, BG)
     getDefaultDefinition.setCustom("value_negative", FG_VALUE, BG, SGR.UNDERLINE)
   }
   window.setTheme(Theme)
   val layoutManager = new LinearLayout
+  layoutManager.setSpacing(1)
   val panel = new Panel(layoutManager)
   window.setComponent(panel)
   val pos = new Label("")
@@ -90,12 +120,23 @@ object UI extends App {
   })
   MidiSystem.getTransmitter.setReceiver(midiReceiver)
   def changeHandler(matrixComponent: Matrix) {
-    val stack = ((StartHere(m1.asValues) >> m0.asScale) === StartHere(m2.asValues)) >> new MasterOut(midiReceiver)
+    val stack = (
+      (StartHere(degreeOfScale.asValues) >> scaleMatrix.asScale) ===
+      (StartHere(degreeOfChord.asValues) >> chordMatrix.asScale >> scaleMatrix.asScale)
+    ) >> new MasterOut(midiReceiver)
     stack(Sequence.empty)
   }
   matrixies.foreach(panel.addComponent)
   panel.addComponent(pos)
-  m1.takeFocus
+//  panel.invalidate()
+//  screen.refresh(RefreshType.COMPLETE)
+  scaleMatrix.takeFocus
+//  screen.doResizeIfNecessary()
+//  window.invalidate()
+  terminal.setVisible(true)
+  terminal.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+  terminal.setTitle("ƒ")
+//  screen.refresh()
   gui.addWindowAndWait(window)
 }
 

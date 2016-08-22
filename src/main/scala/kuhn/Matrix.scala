@@ -85,12 +85,14 @@ class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val
   override def handleKeyStroke(keyStroke: KeyStroke): Result = {
     val result = keyStroke.getKeyType match {
       case ArrowLeft ⇒
-        if (keyStroke.isAltDown) colViewOffset -= 1 * beats
-        else activeColIndex -= (if (keyStroke.isShiftDown) 1 * beats else 1)
+//        if (keyStroke.isAltDown) colViewOffset -= 1 * beats
+//        else
+    activeColIndex -= (if (keyStroke.isShiftDown) 1 * beats else 1)
         Result.HANDLED
       case ArrowRight ⇒
-        if (keyStroke.isAltDown) colViewOffset += 1 * beats
-        else activeColIndex += (if (keyStroke.isShiftDown) 1 * beats else 1)
+//        if (keyStroke.isAltDown) colViewOffset += 1 * beats
+//        else
+    activeColIndex += (if (keyStroke.isShiftDown) 1 * beats else 1)
         Result.HANDLED
       case ArrowUp if activeRowIndex > 0 ⇒
         activeRowIndex -= 1
@@ -119,7 +121,6 @@ class Matrix(val name: String, var rows: List[Row], change: Matrix ⇒ Unit, val
     }
 
     activeColIndex = max(activeColIndex, 0)
-//    width.map(w ⇒ activeColIndex = min(activeColIndex, w - 1))
     result
   }
 

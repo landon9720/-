@@ -10,8 +10,8 @@ import com.googlecode.lanterna.screen.TerminalScreen
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory
 import com.googlecode.lanterna.TerminalPosition
 import kuhn.Monad._
-import kuhn.Scale._
-//import kuhn.Song._
+//import kuhn.Scale._
+//import kuhn.aaSong._
 import kuhn.ƒ._
 
 import scala.collection.JavaConversions._

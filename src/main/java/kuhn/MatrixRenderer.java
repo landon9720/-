@@ -21,7 +21,7 @@ public class MatrixRenderer implements InteractableRenderer<Matrix> {
 
     @Override
     public TerminalSize getPreferredSize(Matrix component) {
-        return new TerminalSize(140, 3 + component.rows().size());
+        return new TerminalSize(300, 3 + component.rows().size());
     }
 
     @Override
